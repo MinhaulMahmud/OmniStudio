@@ -47,7 +47,6 @@ from voice_client import VoiceStudioClient
 from subtitle_generator import SubtitleGenerator
 from video_composer import VideoComposer
 from remotion_renderer import RemotionRenderer
-from remotion_synthesizer import RemotionSynthesizer
 from platform_profiles import (
     resolve_profile_and_format,
     validate_duration,
@@ -85,7 +84,6 @@ class ContentAutomationPipeline:
         self.subtitle_gen = SubtitleGenerator()
         self.video_composer = VideoComposer()
         self.remotion = RemotionRenderer()
-        self.synthesizer = RemotionSynthesizer()
 
     # ─── Full Pipeline ────────────────────────────────────────────────────────
 
@@ -104,7 +102,6 @@ class ContentAutomationPipeline:
         skip_research: bool = False,
         skip_video: bool = False,
         use_remotion: bool = True,
-        visual_style: str = "explainer",
         custom_script: Optional[VideoScript] = None,
         output_subdir: Optional[str] = None,
         profile: Optional[PlatformProfile] = None,
@@ -169,7 +166,6 @@ class ContentAutomationPipeline:
                 run_dir=run_dir,
                 skip_video=skip_video,
                 use_remotion=use_remotion,
-                visual_style=visual_style,
                 profile=profile,
                 video_format=video_format,
             )
@@ -193,7 +189,6 @@ class ContentAutomationPipeline:
                         skip_research=skip_research,
                         skip_video=skip_video,
                         use_remotion=use_remotion,
-                        visual_style=visual_style,
                         profile=profile,
                         video_format=video_format,
                         duration=duration,
@@ -223,7 +218,6 @@ class ContentAutomationPipeline:
         audio_quality: str = DEFAULT_AUDIO_QUALITY,
         voice_refinement: int = DEFAULT_VOICE_REFINEMENT,
         even_out_volume: bool = DEFAULT_EVEN_OUT_VOLUME,
-        visual_style: str = "explainer",
         profile: Optional[PlatformProfile] = None,
         video_format: Optional[VideoFormat] = None,
         duration: Optional[int] = None,
@@ -365,9 +359,9 @@ class ContentAutomationPipeline:
         if not skip_video:
             rendered_remotion = None
 
-            # 5A. AI Synthesized Remotion Motion Graphics Video
+            # 5A. Render Remotion Motion Graphics Video
             if use_remotion and self.remotion.is_available():
-                logger.info("\n⚛️  STEP 5: Synthesizing & Rendering Remotion Visuals...")
+                logger.info("\n⚛️  STEP 5: Rendering Remotion Motion Graphics Explainer...")
                 remotion_path = run_dir / f"video_remotion_{self._safe_name(effective_topic)}.mp4"
 
                 if voice_name and voice_name.lower() in ["minhaz", "clone"]:
@@ -378,37 +372,6 @@ class ContentAutomationPipeline:
                     voice_label = f"{voice_model.title()} Voice"
                 else:
                     voice_label = "KittenTTS Explainer"
-
-                synth_comp_id = "DynamicExplainer"
-
-                if visual_style == "synthesizer":
-                    # Invoke RemotionSynthesizer for dynamic React/TSX scene synthesis
-                    t_synth_start = time.time()
-                    audio_dur_s = audio_ms / 1000.0 if audio_ms else 10.0
-                    v_keywords = getattr(analysis, "primary_keywords", []) + getattr(analysis, "key_concepts", [])
-
-                    synthesized_scene = self.synthesizer.synthesize(
-                        topic=effective_topic,
-                        script=script,
-                        audio_duration_s=audio_dur_s,
-                        visual_keywords=v_keywords,
-                        profile=profile,
-                        video_format=video_format,
-                    )
-                    if synthesized_scene and synthesized_scene.exists():
-                        synth_duration = time.time() - t_synth_start
-                        logger.info(
-                            "   🎨 Custom TSX scene synthesized in %.2fs -> %s (Version: %s, Model: %s)",
-                            synth_duration,
-                            synthesized_scene.name,
-                            self.synthesizer.skills_version[:10],
-                            self.synthesizer.model,
-                        )
-                        synth_comp_id = "DynamicTopicScene"
-                    else:
-                        logger.info("   🎨 Synthesizer yielded fallback; using DynamicExplainer mechanism engine")
-                else:
-                    logger.info("   🎨 Using rich DynamicExplainer motion graphics engine with animated VisualMechanismViewport")
 
                 t_render_start = time.time()
                 rendered_remotion = self.remotion.render(
@@ -421,7 +384,7 @@ class ContentAutomationPipeline:
                     sections=script.sections,
                     segment_timings=segment_timings,
                     narration_text=narration_text,
-                    composition_id=synth_comp_id,
+                    composition_id="DynamicExplainer",
                     profile=profile,
                     video_format=video_format,
                 )
@@ -469,7 +432,6 @@ class ContentAutomationPipeline:
         run_dir: Path,
         skip_video: bool,
         use_remotion: bool = True,
-        visual_style: str = "explainer",
         language: Optional[str] = None,
         voice_model: Optional[str] = None,
         audio_quality: str = DEFAULT_AUDIO_QUALITY,
@@ -489,7 +451,6 @@ class ContentAutomationPipeline:
             skip_research=True,
             skip_video=skip_video,
             use_remotion=use_remotion,
-            visual_style=visual_style,
             language=language,
             voice_model=voice_model,
             audio_quality=audio_quality,
@@ -649,9 +610,6 @@ Examples:
                         help="List available VoiceStudio voices and exit")
 
     # Pipeline control
-    parser.add_argument("--visual-style", "--style", default="explainer",
-                        choices=["explainer", "synthesizer", "auto"],
-                        help="Visual graphics engine style: 'explainer' (uses rich motion graphics with animated mechanisms, HUD, maps, kinetic typography), 'synthesizer' (LLM-synthesized code), or 'auto' (default: explainer).")
     parser.add_argument("--duration", type=int, default=None,
                         help="Target duration in seconds (advisory; adjusts script pacing and word count)")
     parser.add_argument("--no-research", action="store_true",
@@ -776,7 +734,6 @@ Examples:
         skip_research=args.no_research,
         skip_video=args.no_video,
         use_remotion=args.remotion,
-        visual_style=args.visual_style,
         custom_script=custom_script,
         profile=profile,
         video_format=video_format,

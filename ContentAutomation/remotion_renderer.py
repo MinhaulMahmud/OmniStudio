@@ -218,19 +218,8 @@ class RemotionRenderer:
 
         total_frames = max(60, cumulative_frame)
 
-        # Decide composition ID
-        title_lower = title.lower()
-        is_model_weights_topic = any(k in title_lower for k in ["model weight", "compute power", "vram", "quantization", "bandwidth"])
-        is_gearbox_topic = any(k in title_lower for k in ["gearbox", "gear box", "transmission", "bike gear", "motorcycle gear"])
-        dynamic_scene_file = self.remotion_dir / "src" / "scenes" / "generated" / "DynamicTopicScene.tsx"
-
-        if not composition_id:
-            if is_gearbox_topic and abs(total_frames - 1600) < 90:
-                composition_id = "BikeGearboxExplainer"
-            elif is_model_weights_topic and abs(total_frames - 2367) < 90:
-                composition_id = "ModelWeightsExplainer"
-            else:
-                composition_id = "DynamicExplainer"
+        # Resolve composition ID (default to universal DynamicExplainer)
+        composition_id = composition_id or "DynamicExplainer"
 
         # Prepare Props JSON file
         props_data = {

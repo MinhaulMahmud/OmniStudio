@@ -204,6 +204,7 @@ class ContentAutomationPipeline:
         profile: Optional[PlatformProfile] = None,
         video_format: Optional[VideoFormat] = None,
         duration: Optional[int] = None,
+        custom_script: Optional[VideoScript] = None,
     ) -> dict:
         """Run the full pipeline for a single topic."""
         if profile is None or video_format is None:
@@ -246,15 +247,19 @@ class ContentAutomationPipeline:
                 )
                 result["paths"]["research"] = str(research_path)
 
-        # ─── Step 2: Script Generation ─────────────────────────────────────
-        logger.info("\n✍️  STEP 2: Generating script for '%s'...", effective_topic)
-        script = self.script_gen.generate(
-            topic=effective_topic,
-            platform=platform,
-            ideas=ideas[:5] if ideas else [],
-            context_summary=context_summary,
-            target_duration_s=duration,
-        )
+        # ─── Step 2: Script Generation / Ingestion ─────────────────────────
+        if custom_script:
+            logger.info("\n✍️  STEP 2: Ingested pre-authored script for '%s'...", effective_topic)
+            script = custom_script
+        else:
+            logger.info("\n✍️  STEP 2: Generating script for '%s'...", effective_topic)
+            script = self.script_gen.generate(
+                topic=effective_topic,
+                platform=platform,
+                ideas=ideas[:5] if ideas else [],
+                context_summary=context_summary,
+                target_duration_s=duration,
+            )
         script_path = self.script_gen.save_script(
             script, run_dir / f"script_{self._safe_name(effective_topic)}.json"
         )
@@ -442,6 +447,7 @@ class ContentAutomationPipeline:
             language=language,
             profile=profile,
             video_format=video_format,
+            custom_script=script,
         )
 
     # ─── Helpers ──────────────────────────────────────────────────────────────
@@ -628,19 +634,37 @@ Examples:
     # Load custom script if provided
     custom_script = None
     if args.from_script:
+        from script_parser import parse_timestamped_script
         with open(args.from_script, encoding="utf-8") as f:
             data = json.load(f)
-        from script_generator import VideoScript
-        custom_script = VideoScript(
-            title=data["title"],
-            platform=data.get("platform", args.platform),
-            hook=data.get("hook", ""),
-            sections=data.get("sections", []),
-            cta=data.get("cta", ""),
-            tags=data.get("tags", []),
-            seo_description=data.get("seo_description", ""),
-            full_text=data.get("full_narration", ""),
-        )
+
+        has_timestamps = any(isinstance(s, dict) and "start_ms" in s for s in data.get("sections", []))
+        if has_timestamps:
+            try:
+                parsed_script = parse_timestamped_script(data, default_platform=args.platform)
+                custom_script = parsed_script.to_video_script()
+                logger.info("Loaded timestamped script: '%s' (%d sections, %ds)",
+                            custom_script.title, len(custom_script.sections), custom_script.duration_estimate)
+                if args.duration is not None:
+                    logger.warning("⚠️  --duration %ds ignored because --from-script specifies exact timestamps (%ds total).",
+                                   args.duration, custom_script.duration_estimate)
+                    print(f"\n⚠️  --duration {args.duration}s ignored because script has explicit timestamps.\n")
+            except ValueError as err:
+                logger.error("Timestamped script error: %s", err)
+                print(f"\n❌ Script Validation Error: {err}\n", file=sys.stderr)
+                sys.exit(2)
+        else:
+            from script_generator import VideoScript
+            custom_script = VideoScript(
+                title=data["title"],
+                platform=data.get("platform", args.platform),
+                hook=data.get("hook", ""),
+                sections=data.get("sections", []),
+                cta=data.get("cta", ""),
+                tags=data.get("tags", []),
+                seo_description=data.get("seo_description", ""),
+                full_text=data.get("full_narration", ""),
+            )
 
     # Override output dir
     if args.output_dir:

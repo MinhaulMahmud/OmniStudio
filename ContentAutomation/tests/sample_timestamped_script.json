@@ -1,0 +1,18 @@
+{
+  "title": "Jet Propulsion Basics",
+  "platform": "shorts",
+  "sections": [
+    {
+      "id": "hook",
+      "text": "Jet engines push air backward fast.",
+      "start_ms": 0,
+      "duration_ms": 3000
+    },
+    {
+      "id": "body",
+      "text": "Air is compressed, mixed with fuel, and ignited.",
+      "start_ms": 3000,
+      "duration_ms": 7000
+    }
+  ]
+}

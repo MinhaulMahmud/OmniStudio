@@ -12,3 +12,4 @@ export * from "./DynamicBackdrop";
 export * from "./KineticText";
 export * from "./HUDTelemetry";
 export * from "./EnergyPulse";
+export * from "./MapViewport";

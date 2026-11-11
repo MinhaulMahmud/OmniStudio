@@ -3,6 +3,7 @@ import { interpolate, useCurrentFrame } from "remotion";
 import { EngineCrossSection } from "./EngineCrossSection";
 import { SequentialGearboxMechanism } from "./SequentialGearboxMechanism";
 import { GearWheel } from "./GearWheel";
+import { MapViewport } from "../scenes/primitives/MapViewport";
 
 export interface VisualMechanismViewportProps {
   topic: string;
@@ -41,6 +42,97 @@ export const VisualMechanismViewport: React.FC<VisualMechanismViewportProps> = (
     lowerTopic.includes("gpu") ||
     lowerTopic.includes("ai") ||
     lowerTopic.includes("neural");
+
+  const isGeographic =
+    lowerTopic.includes("map") ||
+    lowerTopic.includes("trade") ||
+    lowerTopic.includes("route") ||
+    lowerTopic.includes("silk road") ||
+    lowerTopic.includes("empire") ||
+    lowerTopic.includes("country") ||
+    lowerTopic.includes("continent") ||
+    lowerTopic.includes("world") ||
+    lowerTopic.includes("geography") ||
+    lowerTopic.includes("travel") ||
+    lowerTopic.includes("roman") ||
+    lowerTopic.includes("voyage") ||
+    lowerTopic.includes("shipping") ||
+    lowerTopic.includes("territory");
+
+  // ─── 0. GEOGRAPHIC & MAP ANIMATIONS (d3-geo + TopoJSON) ──────────────────
+  if (isGeographic) {
+    if (sectionIndex === 0) {
+      return (
+        <div
+          style={{
+            width: `${width}px`,
+            height: `${height}px`,
+            borderRadius: "20px",
+            overflow: "hidden",
+            border: "1px solid rgba(0, 229, 255, 0.35)",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.6)",
+          }}
+        >
+          <MapViewport
+            width={width}
+            height={height}
+            projectionType="equal-earth"
+            center={[30, 25]}
+            zoom={1.2}
+            highlightCountries={[
+              { id: "Italy", label: "Rome", appearAtFrame: 0 },
+              { id: "Egypt", label: "Alexandria", appearAtFrame: 15 },
+              { id: "Greece", label: "Athens", appearAtFrame: 30 },
+            ]}
+            pins={[
+              { lngLat: [12.4964, 41.9028], label: "Rome", appearAtFrame: 5 },
+              { lngLat: [29.9187, 31.2001], label: "Alexandria", appearAtFrame: 20 },
+            ]}
+            arcs={[
+              { from: [12.4964, 41.9028], to: [29.9187, 31.2001], label: "Trade Route", appearAtFrame: 10 },
+            ]}
+          />
+        </div>
+      );
+    } else {
+      return (
+        <div
+          style={{
+            width: `${width}px`,
+            height: `${height}px`,
+            borderRadius: "20px",
+            overflow: "hidden",
+            border: "1px solid rgba(0, 229, 255, 0.35)",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.6)",
+          }}
+        >
+          <MapViewport
+            width={width}
+            height={height}
+            projectionType="equal-earth"
+            center={[45, 30]}
+            zoom={1.4}
+            highlightCountries={[
+              { id: "Italy", appearAtFrame: 0 },
+              { id: "Egypt", appearAtFrame: 0 },
+              { id: "Turkey", appearAtFrame: 10 },
+              { id: "Iran", appearAtFrame: 25 },
+              { id: "China", appearAtFrame: 40 },
+            ]}
+            pins={[
+              { lngLat: [12.4964, 41.9028], label: "Rome", appearAtFrame: 0 },
+              { lngLat: [28.9784, 41.0082], label: "Constantinople", appearAtFrame: 15 },
+              { lngLat: [116.4074, 39.9042], label: "Chang'an", appearAtFrame: 35 },
+            ]}
+            arcs={[
+              { from: [12.4964, 41.9028], to: [28.9784, 41.0082], appearAtFrame: 5 },
+              { from: [28.9784, 41.0082], to: [116.4074, 39.9042], appearAtFrame: 25, drawDurationFrames: 50 },
+            ]}
+          />
+        </div>
+      );
+    }
+  }
 
   // ─── 1. MECHANICAL & TRANSMISSION ANIMATIONS ─────────────────────────────
   if (isMechanical) {

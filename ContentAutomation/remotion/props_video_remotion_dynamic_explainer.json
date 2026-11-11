@@ -1,0 +1,57 @@
+{
+  "title": "AI Model Weights Explained: What 7B vs 70B Really Means",
+  "subtitle": "Ever wonder what those massive numbers like 7 billion or 70 billion parameters actually mean in AI models? These aren't just marketing hype—they're the actual intelligence living inside the neural network.",
+  "category": "Artificial Intelligence",
+  "sections": [
+    {
+      "heading": "What Are Model Weights",
+      "text": "Think of weights as the brain cells of AI. Every parameter is a tiny numerical knob that gets tuned during training. When ChatGPT reads your prompt, billions of these numbers activate in sequence, transforming your words into intelligent responses. A 7 billion parameter model literally contains 7 billion of these learned values.",
+      "startFrame": 0,
+      "durationFrames": 540,
+      "badge": "Point 1",
+      "bullets": [
+        "Think of weights as the brain cells of AI.",
+        "Every parameter is a tiny numerical knob that gets tuned during training.",
+        "When ChatGPT reads your prompt, billions of these numbers activate in sequence, transforming your words into intelligent responses."
+      ]
+    },
+    {
+      "heading": "Size vs Intelligence",
+      "text": "Here's the twist: bigger doesn't always mean smarter. A 70 billion parameter model uses more computational power and memory, but a well-trained 7B model can outperform a poorly trained 70B model. It's like comparing a skilled chess player with a basic strategy to a beginner with an encyclopedia.",
+      "startFrame": 540,
+      "durationFrames": 540,
+      "badge": "Point 2",
+      "bullets": [
+        "Here's the twist: bigger doesn't always mean smarter.",
+        "A 70 billion parameter model uses more computational power and memory, but a well-trained 7B model can outperform a poorly trained 70B model.",
+        "It's like comparing a skilled chess player with a basic strategy to a beginner with an encyclopedia."
+      ]
+    },
+    {
+      "heading": "How They Learn",
+      "text": "During training, the AI adjusts these billions of weights through trial and error. It reads millions of examples, makes predictions, checks its mistakes, and tweaks each parameter slightly. After billions of these micro-adjustments, the weights encode patterns about language, reasoning, and knowledge.",
+      "startFrame": 1080,
+      "durationFrames": 540,
+      "badge": "Point 3",
+      "bullets": [
+        "During training, the AI adjusts these billions of weights through trial and error.",
+        "It reads millions of examples, makes predictions, checks its mistakes, and tweaks each parameter slightly.",
+        "After billions of these micro-adjustments, the weights encode patterns about language, reasoning, and knowledge."
+      ]
+    },
+    {
+      "heading": "Real World Impact",
+      "text": "Why does this matter to you? Smaller models like Llama 8B can run on your laptop for privacy and speed. Massive models like GPT-4 with hundreds of billions of parameters need cloud servers but handle complex reasoning better. Choose based on your actual needs, not just the biggest number.",
+      "startFrame": 1620,
+      "durationFrames": 540,
+      "badge": "Point 4",
+      "bullets": [
+        "Why does this matter to you?",
+        "Smaller models like Llama 8B can run on your laptop for privacy and speed.",
+        "Massive models like GPT-4 with hundreds of billions of parameters need cloud servers but handle complex reasoning better."
+      ]
+    }
+  ],
+  "totalFrames": 2160,
+  "audioFile": "audio_video_remotion_dynamic_explainer.mp3"
+}

@@ -1,0 +1,61 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+Timer: 100.0000
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, OutlineColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,60,&H00FFFFFF,&H00000000,1,0,0,0,100,100,0,0,1,2,1,2,10,10,50,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:01.42,Default,,0,0,0,,Ever wondered why running
+Dialogue: 0,0:00:01.47,0:00:02.89,Default,,0,0,0,,an AI model like
+Dialogue: 0,0:00:02.94,0:00:04.36,Default,,0,0,0,,Llama 70B makes your
+Dialogue: 0,0:00:04.41,0:00:05.83,Default,,0,0,0,,GPU scream, while a
+Dialogue: 0,0:00:05.88,0:00:07.30,Default,,0,0,0,,7B model runs effortlessly
+Dialogue: 0,0:00:07.35,0:00:09.07,Default,,0,0,0,,on a laptop? It
+Dialogue: 0,0:00:09.12,0:00:10.54,Default,,0,0,0,,all comes down to
+Dialogue: 0,0:00:10.59,0:00:10.65,Default,,0,0,0,,model weights.
+Dialogue: 0,0:00:10.90,0:00:12.47,Default,,0,0,0,,In modern AI, weights
+Dialogue: 0,0:00:12.52,0:00:14.09,Default,,0,0,0,,are the learned numerical
+Dialogue: 0,0:00:14.14,0:00:15.71,Default,,0,0,0,,parameters stored in memory
+Dialogue: 0,0:00:15.76,0:00:17.34,Default,,0,0,0,,that determine how neural
+Dialogue: 0,0:00:17.39,0:00:19.26,Default,,0,0,0,,activations flow. A 7-billion
+Dialogue: 0,0:00:19.31,0:00:20.88,Default,,0,0,0,,parameter model literally holds
+Dialogue: 0,0:00:20.93,0:00:22.51,Default,,0,0,0,,seven billion distinct floating
+Dialogue: 0,0:00:22.56,0:00:22.70,Default,,0,0,0,,point numbers.
+Dialogue: 0,0:00:22.95,0:00:24.49,Default,,0,0,0,,Here is the exact
+Dialogue: 0,0:00:24.54,0:00:26.38,Default,,0,0,0,,formula. At standard 16-bit
+Dialogue: 0,0:00:26.43,0:00:27.97,Default,,0,0,0,,precision, every single parameter
+Dialogue: 0,0:00:28.02,0:00:29.57,Default,,0,0,0,,requires two bytes of
+Dialogue: 0,0:00:29.62,0:00:31.46,Default,,0,0,0,,storage. That means a
+Dialogue: 0,0:00:31.51,0:00:33.05,Default,,0,0,0,,70-billion parameter model demands
+Dialogue: 0,0:00:33.10,0:00:34.65,Default,,0,0,0,,a staggering 140 gigabytes
+Dialogue: 0,0:00:34.70,0:00:36.24,Default,,0,0,0,,of ultra-fast VRAM just
+Dialogue: 0,0:00:36.29,0:00:37.83,Default,,0,0,0,,to load the weights
+Dialogue: 0,0:00:37.88,0:00:38.00,Default,,0,0,0,,into GPU memory.
+Dialogue: 0,0:00:38.25,0:00:40.05,Default,,0,0,0,,During inference, text generation
+Dialogue: 0,0:00:40.10,0:00:42.20,Default,,0,0,0,,is strictly memory-bandwidth bound.
+Dialogue: 0,0:00:42.25,0:00:44.06,Default,,0,0,0,,For every single token
+Dialogue: 0,0:00:44.11,0:00:45.91,Default,,0,0,0,,generated, the GPU must
+Dialogue: 0,0:00:45.96,0:00:47.77,Default,,0,0,0,,stream every active weight
+Dialogue: 0,0:00:47.82,0:00:49.62,Default,,0,0,0,,from VRAM into the
+Dialogue: 0,0:00:49.67,0:00:51.77,Default,,0,0,0,,compute cores. More weights
+Dialogue: 0,0:00:51.82,0:00:53.59,Default,,0,0,0,,mean more gigabytes transferred
+Dialogue: 0,0:00:53.68,0:00:53.59,Default,,0,0,0,,per second.
+Dialogue: 0,0:00:53.84,0:00:55.61,Default,,0,0,0,,This is why quantization
+Dialogue: 0,0:00:55.66,0:00:57.73,Default,,0,0,0,,is revolutionary. By compressing
+Dialogue: 0,0:00:57.78,0:00:59.55,Default,,0,0,0,,weights from 16-bit down
+Dialogue: 0,0:00:59.60,0:01:01.37,Default,,0,0,0,,to 4-bit, we slash
+Dialogue: 0,0:01:01.42,0:01:03.19,Default,,0,0,0,,memory requirements by four
+Dialogue: 0,0:01:03.24,0:01:05.01,Default,,0,0,0,,times, enabling massive models
+Dialogue: 0,0:01:05.06,0:01:06.83,Default,,0,0,0,,to run on consumer
+Dialogue: 0,0:01:06.88,0:01:08.65,Default,,0,0,0,,hardware with virtually zero
+Dialogue: 0,0:01:08.70,0:01:09.33,Default,,0,0,0,,loss in intelligence.
+Dialogue: 0,0:01:09.58,0:01:11.24,Default,,0,0,0,,Now you know: model
+Dialogue: 0,0:01:11.29,0:01:12.95,Default,,0,0,0,,weight size and precision
+Dialogue: 0,0:01:13.00,0:01:14.67,Default,,0,0,0,,directly dictate your compute
+Dialogue: 0,0:01:14.72,0:01:16.68,Default,,0,0,0,,costs. Follow for more
+Dialogue: 0,0:01:16.73,0:01:17.90,Default,,0,0,0,,deep-dive AI engineering breakdowns!

@@ -1,0 +1,31 @@
+{
+  "title": "How AI Model Weights Determine Compute Power",
+  "platform": "youtube",
+  "voice_name": "Minhaz",
+  "hook": "Ever wondered why running an AI model like Llama 70B makes your GPU scream, while a 7B model runs effortlessly on a laptop? It all comes down to model weights.",
+  "sections": [
+    {
+      "heading": "What Are Weights?",
+      "text": "In modern AI, weights are the learned numerical parameters stored in memory that determine how neural activations flow. A 7-billion parameter model literally holds seven billion distinct floating point numbers.",
+      "duration_hint": 15
+    },
+    {
+      "heading": "The Memory Equation",
+      "text": "Here is the exact formula. At standard 16-bit precision, every single parameter requires two bytes of storage. That means a 70-billion parameter model demands a staggering 140 gigabytes of ultra-fast VRAM just to load the weights into GPU memory.",
+      "duration_hint": 18
+    },
+    {
+      "heading": "The Bandwidth Bottleneck",
+      "text": "During inference, text generation is strictly memory-bandwidth bound. For every single token generated, the GPU must stream every active weight from VRAM into the compute cores. More weights mean more gigabytes transferred per second.",
+      "duration_hint": 18
+    },
+    {
+      "heading": "Quantization Magic",
+      "text": "This is why quantization is revolutionary. By compressing weights from 16-bit down to 4-bit, we slash memory requirements by four times, enabling massive models to run on consumer hardware with virtually zero loss in intelligence.",
+      "duration_hint": 16
+    }
+  ],
+  "cta": "Now you know: model weight size and precision directly dictate your compute costs. Follow for more deep-dive AI engineering breakdowns!",
+  "tags": ["AI", "MachineLearning", "LLM", "DeepLearning", "GPU", "TechExplained"],
+  "seo_description": "Learn how AI model weights and parameter counts determine the VRAM, compute power, and memory bandwidth needed to run large language models."
+}

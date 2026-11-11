@@ -1,0 +1,195 @@
+1
+00:00:00,000 --> 00:00:01,420
+Ever wondered why running
+
+2
+00:00:01,470 --> 00:00:02,890
+an AI model like
+
+3
+00:00:02,940 --> 00:00:04,360
+Llama 70B makes your
+
+4
+00:00:04,410 --> 00:00:05,830
+GPU scream, while a
+
+5
+00:00:05,880 --> 00:00:07,300
+7B model runs effortlessly
+
+6
+00:00:07,350 --> 00:00:09,070
+on a laptop? It
+
+7
+00:00:09,120 --> 00:00:10,540
+all comes down to
+
+8
+00:00:10,590 --> 00:00:10,650
+model weights.
+
+9
+00:00:10,900 --> 00:00:12,473
+In modern AI, weights
+
+10
+00:00:12,523 --> 00:00:14,096
+are the learned numerical
+
+11
+00:00:14,146 --> 00:00:15,719
+parameters stored in memory
+
+12
+00:00:15,769 --> 00:00:17,342
+that determine how neural
+
+13
+00:00:17,392 --> 00:00:19,265
+activations flow. A 7-billion
+
+14
+00:00:19,315 --> 00:00:20,888
+parameter model literally holds
+
+15
+00:00:20,938 --> 00:00:22,511
+seven billion distinct floating
+
+16
+00:00:22,561 --> 00:00:22,700
+point numbers.
+
+17
+00:00:22,950 --> 00:00:24,493
+Here is the exact
+
+18
+00:00:24,543 --> 00:00:26,386
+formula. At standard 16-bit
+
+19
+00:00:26,436 --> 00:00:27,979
+precision, every single parameter
+
+20
+00:00:28,029 --> 00:00:29,572
+requires two bytes of
+
+21
+00:00:29,622 --> 00:00:31,465
+storage. That means a
+
+22
+00:00:31,515 --> 00:00:33,058
+70-billion parameter model demands
+
+23
+00:00:33,108 --> 00:00:34,651
+a staggering 140 gigabytes
+
+24
+00:00:34,701 --> 00:00:36,244
+of ultra-fast VRAM just
+
+25
+00:00:36,294 --> 00:00:37,837
+to load the weights
+
+26
+00:00:37,887 --> 00:00:38,000
+into GPU memory.
+
+27
+00:00:38,250 --> 00:00:40,054
+During inference, text generation
+
+28
+00:00:40,104 --> 00:00:42,208
+is strictly memory-bandwidth bound.
+
+29
+00:00:42,258 --> 00:00:44,062
+For every single token
+
+30
+00:00:44,112 --> 00:00:45,916
+generated, the GPU must
+
+31
+00:00:45,966 --> 00:00:47,770
+stream every active weight
+
+32
+00:00:47,820 --> 00:00:49,624
+from VRAM into the
+
+33
+00:00:49,674 --> 00:00:51,778
+compute cores. More weights
+
+34
+00:00:51,828 --> 00:00:53,590
+mean more gigabytes transferred
+
+35
+00:00:53,682 --> 00:00:53,590
+per second.
+
+36
+00:00:53,840 --> 00:00:55,610
+This is why quantization
+
+37
+00:00:55,660 --> 00:00:57,730
+is revolutionary. By compressing
+
+38
+00:00:57,780 --> 00:00:59,550
+weights from 16-bit down
+
+39
+00:00:59,600 --> 00:01:01,370
+to 4-bit, we slash
+
+40
+00:01:01,420 --> 00:01:03,190
+memory requirements by four
+
+41
+00:01:03,240 --> 00:01:05,010
+times, enabling massive models
+
+42
+00:01:05,060 --> 00:01:06,830
+to run on consumer
+
+43
+00:01:06,880 --> 00:01:08,650
+hardware with virtually zero
+
+44
+00:01:08,700 --> 00:01:09,330
+loss in intelligence.
+
+45
+00:01:09,580 --> 00:01:11,244
+Now you know: model
+
+46
+00:01:11,294 --> 00:01:12,958
+weight size and precision
+
+47
+00:01:13,008 --> 00:01:14,672
+directly dictate your compute
+
+48
+00:01:14,722 --> 00:01:16,686
+costs. Follow for more
+
+49
+00:01:16,736 --> 00:01:17,900
+deep-dive AI engineering breakdowns!

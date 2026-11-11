@@ -1,0 +1,37 @@
+{
+  "trusted_creators": [
+    "3blue1brown",
+    "veritasium",
+    "branch education",
+    "engineering explained",
+    "real engineering",
+    "kurzgesagt",
+    "two minute papers",
+    "lex fridman",
+    "smarter everyday",
+    "steve mould",
+    "lesics",
+    "learn engineering",
+    "statquest",
+    "computerphile",
+    "minutephysics",
+    "cleo abram",
+    "mark rober",
+    "marques brownlee",
+    "fireship"
+  ],
+  "trusted_domains": [
+    "arxiv.org",
+    "wikipedia.org",
+    "github.com",
+    "huggingface.co",
+    "nature.com",
+    "ieee.org",
+    "acm.org",
+    ".edu",
+    ".gov",
+    "docs.python.org"
+  ],
+  "authority_bonus": 150.0,
+  "domain_bonus": 100.0
+}

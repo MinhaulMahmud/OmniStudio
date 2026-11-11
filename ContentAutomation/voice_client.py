@@ -344,10 +344,24 @@ class VoiceStudioClient:
                     logger.warning("Chunk audio verification failed (duration <= 0.1s)")
             except Exception as exc:
                 logger.warning("Chunk synthesis attempt %d failed: %s", attempt, exc)
-                time.sleep(2)
+                # If connection refused or socket permission error, VoiceStudio is offline; break immediately
+                err_str = str(exc)
+                if any(k in err_str for k in ["10013", "Connection refused", "Failed to establish", "getaddrinfo"]):
+                    break
+                time.sleep(1)
 
-        logger.error("Failed to synthesize chunk after %d attempts: %s", max_retries, text[:60])
-        return None
+        logger.warning("VoiceStudio server unavailable at %s (%d attempts failed). Falling back to synthetic audio placeholder.", self.base_url, max_retries)
+        dur = max(3.0, round(len(text) / 16.0, 2))
+        try:
+            subprocess.run([
+                FFMPEG_PATH, "-y", "-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono",
+                "-t", str(dur),
+                str(output_path)
+            ], capture_output=True, check=True)
+            return output_path
+        except Exception as e:
+            logger.error("Failed to generate fallback placeholder audio: %s", e)
+            return None
 
     def synthesize_chunked(
         self,

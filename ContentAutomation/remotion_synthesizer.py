@@ -470,8 +470,14 @@ Return ONLY valid .tsx code."""
             ):
                 return True, ""
 
-            err_msg = res.stderr[-500:] if res.stderr else res.stdout[-500:]
-            return False, err_msg
+            # Extract meaningful error lines for the LLM repair loop rather than raw node stack frames
+            error_lines = [
+                line.strip() for line in combined_out.splitlines()
+                if any(k in line.lower() for k in ["error", "cannot find", "failed to", "syntaxerror", "typeerror", "referenceerror", "is not defined"])
+                and not line.strip().startswith("at ")
+            ]
+            meaningful_error = "\n".join(error_lines[-6:]) if error_lines else (res.stderr[-500:] if res.stderr else res.stdout[-500:])
+            return False, meaningful_error
         except subprocess.TimeoutExpired as exc:
             return False, f"Timeout after 90s: {exc}"
         except Exception as exc:

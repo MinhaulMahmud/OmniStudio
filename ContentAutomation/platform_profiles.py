@@ -248,3 +248,53 @@ def resolve_profile_and_format(
         )
 
     return profile, profile.format
+
+
+def validate_duration(
+    duration_s: Optional[int],
+    profile: PlatformProfile,
+) -> tuple[bool, Optional[str]]:
+    """
+    Validate user-specified duration against platform profile bounds.
+
+    Returns:
+        (is_valid, message):
+          - (True, None) if duration is within range or None.
+          - (False, error_msg) if duration <= 0.
+          - (True, warning_msg) if duration is outside platform bounds (advisory).
+    """
+    if duration_s is None:
+        return True, None
+
+    if duration_s <= 0:
+        return False, f"Invalid duration {duration_s}s: duration must be greater than 0."
+
+    min_s, max_s = profile.duration_range_s
+    if duration_s < min_s:
+        return True, (
+            f"Advisory: requested duration {duration_s}s is below recommended minimum "
+            f"for {profile.display_name} ({min_s}s). Video will be generated with tighter pacing."
+        )
+    if duration_s > max_s:
+        return True, (
+            f"Advisory: requested duration {duration_s}s exceeds recommended maximum "
+            f"for {profile.display_name} ({max_s}s). Video will be generated as a longer cut."
+        )
+
+    return True, None
+
+
+def calculate_target_words(
+    duration_s: int,
+    wpm: int = 140,
+) -> tuple[int, int]:
+    """
+    Calculate target word count range (min_words, max_words) for a given duration in seconds.
+    Uses ±15% tolerance around average speech rate.
+    """
+    if duration_s <= 0:
+        raise ValueError(f"Duration must be greater than 0, got {duration_s}")
+    center_words = int(duration_s * (wpm / 60.0))
+    min_words = max(5, int(center_words * 0.85))
+    max_words = max(min_words + 5, int(center_words * 1.15))
+    return min_words, max_words

@@ -47,6 +47,7 @@ from remotion_renderer import RemotionRenderer
 from remotion_synthesizer import RemotionSynthesizer
 from platform_profiles import (
     resolve_profile_and_format,
+    validate_duration,
     ArgumentConflictError,
     PlatformProfile,
     VideoFormat,
@@ -100,6 +101,7 @@ class ContentAutomationPipeline:
         output_subdir: Optional[str] = None,
         profile: Optional[PlatformProfile] = None,
         video_format: Optional[VideoFormat] = None,
+        duration: Optional[int] = None,
     ) -> list[dict]:
         """
         Run the full pipeline for one or more topics.
@@ -176,6 +178,7 @@ class ContentAutomationPipeline:
                         use_remotion=use_remotion,
                         profile=profile,
                         video_format=video_format,
+                        duration=duration,
                     )
                     results.append(result)
                 except Exception as exc:
@@ -200,6 +203,7 @@ class ContentAutomationPipeline:
         language: Optional[str] = None,
         profile: Optional[PlatformProfile] = None,
         video_format: Optional[VideoFormat] = None,
+        duration: Optional[int] = None,
     ) -> dict:
         """Run the full pipeline for a single topic."""
         if profile is None or video_format is None:
@@ -249,6 +253,7 @@ class ContentAutomationPipeline:
             platform=platform,
             ideas=ideas[:5] if ideas else [],
             context_summary=context_summary,
+            target_duration_s=duration,
         )
         script_path = self.script_gen.save_script(
             script, run_dir / f"script_{self._safe_name(effective_topic)}.json"
@@ -577,6 +582,8 @@ Examples:
                         help="List available VoiceStudio voices and exit")
 
     # Pipeline control
+    parser.add_argument("--duration", type=int, default=None,
+                        help="Target duration in seconds (advisory; adjusts script pacing and word count)")
     parser.add_argument("--no-research", action="store_true",
                         help="Skip yt-dlp research step")
     parser.add_argument("--no-video", action="store_true",
@@ -653,6 +660,16 @@ Examples:
         print(f"\n❌ Configuration Error: {err}\n", file=sys.stderr)
         sys.exit(2)
 
+    # Validate duration if provided
+    is_valid_dur, dur_msg = validate_duration(args.duration, profile)
+    if not is_valid_dur:
+        logger.error("Duration error: %s", dur_msg)
+        print(f"\n❌ Configuration Error: {dur_msg}\n", file=sys.stderr)
+        sys.exit(2)
+    elif dur_msg:
+        logger.warning("⚠️  %s", dur_msg)
+        print(f"\n⚠️  {dur_msg}\n")
+
     active_formats = [f.strip() for f in args.formats.split(",")] if args.formats else [profile.id]
 
     # Run pipeline
@@ -670,6 +687,7 @@ Examples:
         custom_script=custom_script,
         profile=profile,
         video_format=video_format,
+        duration=args.duration,
     )
 
 

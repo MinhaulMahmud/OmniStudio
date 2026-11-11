@@ -514,6 +514,7 @@ class ScriptGenerator:
         platform: str = "youtube",
         ideas: Optional[list[VideoIdea]] = None,
         context_summary: str = "",
+        target_duration_s: Optional[int] = None,
     ) -> VideoScript:
         """Generate a complete video script."""
         insights = self._build_insights(ideas or [])
@@ -523,11 +524,25 @@ class ScriptGenerator:
         prompt_tmpl = SCRIPT_PROMPTS.get(platform, SCRIPT_PROMPTS["youtube"])
         prompt = prompt_tmpl.format(topic=topic, insights=insights)
 
-        logger.info("✍️  Generating %s script: %s (backend: %s)",
-                    platform.upper(), topic[:60], self._active_backend)
+        if target_duration_s and target_duration_s > 0:
+            try:
+                from platform_profiles import calculate_target_words
+                min_w, max_w = calculate_target_words(target_duration_s)
+                duration_instruction = (
+                    f"\n\nSTRICT TARGET DURATION REQUIREMENT:\n"
+                    f"- This video has a target duration of approximately {target_duration_s} seconds.\n"
+                    f"- Total narration word count across hook, sections, and cta MUST be between {min_w} and {max_w} words.\n"
+                    f"- Calibrate section duration_hint values so their sum equals approximately {target_duration_s} seconds.\n"
+                )
+                prompt += duration_instruction
+            except Exception as e:
+                logger.warning("Could not append duration constraint: %s", e)
+
+        logger.info("✍️  Generating %s script: %s (backend: %s, target duration: %ss)",
+                    platform.upper(), topic[:60], self._active_backend, target_duration_s or "default")
 
         raw = self._call_llm(prompt)
-        return self._parse(raw, topic, platform)
+        return self._parse(raw, topic, platform, target_duration_s=target_duration_s)
 
     def generate_from_idea(self, idea: VideoIdea, platform: str = "youtube") -> VideoScript:
         """Generate a script inspired by a trending video idea."""
@@ -621,7 +636,13 @@ class ScriptGenerator:
 
     # ─── Parsing ─────────────────────────────────────────────────────────────
 
-    def _parse(self, raw: str, topic: str, platform: str) -> VideoScript:
+    def _parse(
+        self,
+        raw: str,
+        topic: str,
+        platform: str,
+        target_duration_s: Optional[int] = None,
+    ) -> VideoScript:
         """Parse LLM JSON response into a VideoScript."""
         # Strip markdown fences if the LLM added them anyway
         raw = re.sub(r"```(?:json)?\s*", "", raw).strip().rstrip("`").strip()
@@ -632,6 +653,12 @@ class ScriptGenerator:
             try:
                 data = json.loads(json_match.group())
                 sections = data.get("sections", [])
+                calc_duration = sum(s.get("duration_hint", 60) for s in sections)
+                if target_duration_s and target_duration_s > 0:
+                    final_duration = target_duration_s
+                else:
+                    final_duration = calc_duration
+
                 return VideoScript(
                     title=data.get("title", topic),
                     platform=platform,
@@ -640,20 +667,22 @@ class ScriptGenerator:
                     cta=data.get("cta", "Like and subscribe for more!"),
                     tags=data.get("tags", []),
                     seo_description=data.get("seo_description", ""),
-                    duration_estimate=sum(s.get("duration_hint", 60) for s in sections),
+                    duration_estimate=final_duration,
                 )
             except json.JSONDecodeError:
                 pass
 
         # Fallback: use the whole response as narration text
         logger.warning("Could not parse JSON response. Using raw text as script body.")
+        fallback_duration = target_duration_s if (target_duration_s and target_duration_s > 0) else 300
         return VideoScript(
             title=topic,
             platform=platform,
             hook=f"Today we're exploring: {topic}.",
-            sections=[{"heading": "Main Content", "text": raw or topic, "duration_hint": 300}],
+            sections=[{"heading": "Main Content", "text": raw or topic, "duration_hint": fallback_duration}],
             cta="Like, subscribe, and leave a comment!",
             full_text=raw or f"Let's talk about {topic}.",
+            duration_estimate=fallback_duration,
         )
 
     # ─── Insights Builder ─────────────────────────────────────────────────────

@@ -40,6 +40,7 @@ export const DynamicExplainer: React.FC<DynamicExplainerProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
+  const isPortrait = height > width;
 
   // Overall timeline progress (0 -> 100%)
   const progressPercent = Math.min(100, Math.max(0, (frame / (totalFrames || 1)) * 100));
@@ -93,11 +94,11 @@ export const DynamicExplainer: React.FC<DynamicExplainerProps> = ({
           top: 0,
           left: 0,
           right: 0,
-          height: "80px",
+          height: isPortrait ? "110px" : "80px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "0 60px",
+          padding: isPortrait ? "30px 40px 0 40px" : "0 60px",
           background: "linear-gradient(to bottom, rgba(7, 7, 20, 0.95), transparent)",
           zIndex: 50,
         }}
@@ -162,7 +163,7 @@ export const DynamicExplainer: React.FC<DynamicExplainerProps> = ({
       <div
         style={{
           position: "absolute",
-          top: "80px",
+          top: isPortrait ? "110px" : "80px",
           left: 0,
           right: 0,
           height: "4px",
@@ -207,9 +208,9 @@ export const DynamicExplainer: React.FC<DynamicExplainerProps> = ({
       <div
         style={{
           position: "absolute",
-          bottom: "35px",
-          left: "80px",
-          right: "80px",
+          bottom: isPortrait ? "180px" : "35px",
+          left: isPortrait ? "40px" : "80px",
+          right: isPortrait ? "40px" : "80px",
           minHeight: "75px",
           padding: "16px 28px",
           borderRadius: "16px",
@@ -226,7 +227,7 @@ export const DynamicExplainer: React.FC<DynamicExplainerProps> = ({
       >
         <span
           style={{
-            fontSize: "24px",
+            fontSize: isPortrait ? "22px" : "24px",
             lineHeight: "1.4",
             fontWeight: 500,
             color: "#f8fafc",
@@ -256,7 +257,8 @@ const SectionSlide: React.FC<SectionSlideProps> = ({
   mainTitle,
 }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const { fps, width, height } = useVideoConfig();
+  const isPortrait = height > width;
 
   // Entrance spring animation
   const enterScale = spring({
@@ -279,21 +281,22 @@ const SectionSlide: React.FC<SectionSlideProps> = ({
       style={{
         flex: 1,
         display: "flex",
-        flexDirection: "row",
+        flexDirection: isPortrait ? "column" : "row",
         alignItems: "center",
-        justifyContent: "space-between",
-        padding: "90px 60px 110px 60px",
-        gap: "40px",
+        justifyContent: isPortrait ? "center" : "space-between",
+        padding: isPortrait ? "130px 40px 260px 40px" : "90px 60px 110px 60px",
+        gap: isPortrait ? "24px" : "40px",
         zIndex: 20,
       }}
     >
       {/* Left Column: Heading & Core Takeaways */}
       <div
         style={{
-          width: "560px",
+          width: isPortrait ? "100%" : "560px",
+          maxWidth: isPortrait ? "960px" : "560px",
           display: "flex",
           flexDirection: "column",
-          gap: "14px",
+          gap: "12px",
         }}
       >
         {/* Section Step Badge */}
@@ -318,10 +321,10 @@ const SectionSlide: React.FC<SectionSlideProps> = ({
         {/* Main Section Heading */}
         <h1
           style={{
-            fontSize: "42px",
+            fontSize: isPortrait ? "36px" : "42px",
             fontWeight: 900,
             lineHeight: "1.2",
-            margin: "0 0 10px 0",
+            margin: "0 0 6px 0",
             background: "linear-gradient(135deg, #ffffff 40%, #38bdf8 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
@@ -332,8 +335,8 @@ const SectionSlide: React.FC<SectionSlideProps> = ({
         </h1>
 
         {/* Structured Insight Bullets */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          {bullets.slice(0, 3).map((bullet, bIdx) => (
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          {bullets.slice(0, isPortrait ? 2 : 3).map((bullet, bIdx) => (
             <div
               key={bIdx}
               style={{
@@ -343,14 +346,14 @@ const SectionSlide: React.FC<SectionSlideProps> = ({
                 backgroundColor: "rgba(15, 23, 42, 0.75)",
                 border: "1px solid rgba(255, 255, 255, 0.08)",
                 borderRadius: "14px",
-                padding: "14px 18px",
+                padding: "12px 16px",
                 boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
               }}
             >
               <div
                 style={{
-                  width: "28px",
-                  height: "28px",
+                  width: "26px",
+                  height: "26px",
                   borderRadius: "8px",
                   backgroundColor: "rgba(56, 189, 248, 0.2)",
                   color: "#38bdf8",
@@ -358,13 +361,13 @@ const SectionSlide: React.FC<SectionSlideProps> = ({
                   alignItems: "center",
                   justifyContent: "center",
                   fontWeight: 800,
-                  fontSize: "14px",
+                  fontSize: "13px",
                   flexShrink: 0,
                 }}
               >
                 {bIdx + 1}
               </div>
-              <p style={{ margin: 0, fontSize: "16px", color: "#e2e8f0", lineHeight: "1.4", fontWeight: 400 }}>
+              <p style={{ margin: 0, fontSize: "15px", color: "#e2e8f0", lineHeight: "1.4", fontWeight: 400 }}>
                 {bullet}
               </p>
             </div>
@@ -373,14 +376,14 @@ const SectionSlide: React.FC<SectionSlideProps> = ({
       </div>
 
       {/* Right Column: Live Animated Mechanical/Technical Mechanism Viewport */}
-      <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center" }}>
+      <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", width: "100%" }}>
         <VisualMechanismViewport
           topic={mainTitle}
           sectionIndex={sectionIndex}
           totalSections={totalSections}
           heading={section.heading}
-          width={1140}
-          height={640}
+          width={isPortrait ? 960 : 1140}
+          height={isPortrait ? 600 : 640}
         />
       </div>
     </div>

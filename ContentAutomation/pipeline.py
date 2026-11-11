@@ -346,14 +346,19 @@ class ContentAutomationPipeline:
                     profile=profile,
                     video_format=video_format,
                 )
-                synth_duration = time.time() - t_synth_start
-                logger.info(
-                    "   🎨 Scene synthesized in %.2fs -> %s (Version: %s, Model: %s)",
-                    synth_duration,
-                    synthesized_scene.name,
-                    self.synthesizer.skills_version[:10],
-                    self.synthesizer.model,
-                )
+                synth_comp_id = None
+                if synthesized_scene and synthesized_scene.exists():
+                    synth_duration = time.time() - t_synth_start
+                    logger.info(
+                        "   🎨 Scene synthesized in %.2fs -> %s (Version: %s, Model: %s)",
+                        synth_duration,
+                        synthesized_scene.name,
+                        self.synthesizer.skills_version[:10],
+                        self.synthesizer.model,
+                    )
+                    synth_comp_id = "DynamicTopicScene"
+                else:
+                    logger.info("   🎨 Using rich DynamicExplainer motion graphics engine with VisualMechanismViewport")
 
                 t_render_start = time.time()
                 rendered_remotion = self.remotion.render(
@@ -366,7 +371,7 @@ class ContentAutomationPipeline:
                     sections=script.sections,
                     segment_timings=segment_timings,
                     narration_text=narration_text,
-                    composition_id="DynamicTopicScene",
+                    composition_id=synth_comp_id,
                     profile=profile,
                     video_format=video_format,
                 )

@@ -216,9 +216,7 @@ class RemotionRenderer:
         dynamic_scene_file = self.remotion_dir / "src" / "scenes" / "generated" / "DynamicTopicScene.tsx"
 
         if not composition_id:
-            if dynamic_scene_file.exists():
-                composition_id = "DynamicTopicScene"
-            elif is_gearbox_topic and abs(total_frames - 1600) < 90:
+            if is_gearbox_topic and abs(total_frames - 1600) < 90:
                 composition_id = "BikeGearboxExplainer"
             elif is_model_weights_topic and abs(total_frames - 2367) < 90:
                 composition_id = "ModelWeightsExplainer"

@@ -303,10 +303,10 @@ class RemotionSynthesizer:
             logger.info("✅ Remotion scene synthesized successfully in %d attempt(s) (%.1fs)", attempt, render_elapsed)
             return OUTPUT_FILE
 
-        # Fallback if all attempts fail
-        logger.warning("All %d AI synthesis attempts failed. Falling back to deterministic scene composition.", max_repair_attempts)
-        self._write_fallback(topic, script, audio_duration_s, profile, video_format)
-        return OUTPUT_FILE
+        # Fallback if all attempts fail (Disabled per user request: do not use deterministic fallback safety)
+        logger.warning("All %d AI synthesis attempts failed. Fallback disabled.", max_repair_attempts)
+        # self._write_fallback(topic, script, audio_duration_s, profile, video_format)
+        return None
 
     def _build_system_prompt(self) -> str:
         skills_prompt = load_remotion_skills_prompt(tags=["animation", "markup", "layout", "timing", "composition"])

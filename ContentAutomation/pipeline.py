@@ -45,6 +45,13 @@ from subtitle_generator import SubtitleGenerator
 from video_composer import VideoComposer
 from remotion_renderer import RemotionRenderer
 from remotion_synthesizer import RemotionSynthesizer
+from platform_profiles import (
+    resolve_profile_and_format,
+    ArgumentConflictError,
+    PlatformProfile,
+    VideoFormat,
+    LayoutMode,
+)
 
 # ─── Logging Setup ────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -91,6 +98,8 @@ class ContentAutomationPipeline:
         use_remotion: bool = True,
         custom_script: Optional[VideoScript] = None,
         output_subdir: Optional[str] = None,
+        profile: Optional[PlatformProfile] = None,
+        video_format: Optional[VideoFormat] = None,
     ) -> list[dict]:
         """
         Run the full pipeline for one or more topics.
@@ -105,12 +114,17 @@ class ContentAutomationPipeline:
             skip_video: Only generate audio + script, not video.
             custom_script: Pre-built VideoScript to use directly.
             output_subdir: Subdirectory under output/ for this run.
+            profile: Optional PlatformProfile specifying safe zones, pacing, limits.
+            video_format: Optional VideoFormat specifying resolution, layout_mode.
 
         Returns:
             List of result dicts with paths to generated assets.
         """
+        if profile is None or video_format is None:
+            profile, video_format = resolve_profile_and_format(platform)
+
         topics = topics or DEFAULT_TOPICS
-        formats = formats or OUTPUT_FORMATS
+        formats = formats or [profile.id]
         run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
         run_dir = OUTPUT_DIR / (output_subdir or run_id)
         run_dir.mkdir(parents=True, exist_ok=True)
@@ -119,7 +133,8 @@ class ContentAutomationPipeline:
         logger.info("🚀 Content Automation Pipeline Started")
         logger.info("   Run ID: %s", run_id)
         logger.info("   Topics: %s", ", ".join(topics[:3]))
-        logger.info("   Platform: %s", platform)
+        logger.info("   Platform Profile: %s (%s)", profile.display_name, profile.id)
+        logger.info("   Video Format: %dx%d (%s, %s)", video_format.width, video_format.height, video_format.aspect_ratio, video_format.layout_mode.value)
         logger.info("   Formats: %s", ", ".join(formats))
         logger.info("   Output: %s", run_dir)
         logger.info("=" * 60)
@@ -140,6 +155,8 @@ class ContentAutomationPipeline:
                 run_dir=run_dir,
                 skip_video=skip_video,
                 use_remotion=use_remotion,
+                profile=profile,
+                video_format=video_format,
             )
             results.append(result)
         else:
@@ -157,6 +174,8 @@ class ContentAutomationPipeline:
                         skip_research=skip_research,
                         skip_video=skip_video,
                         use_remotion=use_remotion,
+                        profile=profile,
+                        video_format=video_format,
                     )
                     results.append(result)
                 except Exception as exc:
@@ -179,8 +198,13 @@ class ContentAutomationPipeline:
         skip_video: bool,
         use_remotion: bool = True,
         language: Optional[str] = None,
+        profile: Optional[PlatformProfile] = None,
+        video_format: Optional[VideoFormat] = None,
     ) -> dict:
         """Run the full pipeline for a single topic."""
+        if profile is None or video_format is None:
+            profile, video_format = resolve_profile_and_format(platform)
+
         result = {
             "topic": topic,
             "platform": platform,
@@ -319,6 +343,8 @@ class ContentAutomationPipeline:
                     script=script,
                     audio_duration_s=audio_dur_s,
                     visual_keywords=v_keywords,
+                    profile=profile,
+                    video_format=video_format,
                 )
                 synth_duration = time.time() - t_synth_start
                 logger.info(
@@ -341,6 +367,8 @@ class ContentAutomationPipeline:
                     segment_timings=segment_timings,
                     narration_text=narration_text,
                     composition_id="DynamicTopicScene",
+                    profile=profile,
+                    video_format=video_format,
                 )
                 render_duration = time.time() - t_render_start
                 if rendered_remotion and rendered_remotion.exists():
@@ -387,6 +415,8 @@ class ContentAutomationPipeline:
         skip_video: bool,
         use_remotion: bool = True,
         language: Optional[str] = None,
+        profile: Optional[PlatformProfile] = None,
+        video_format: Optional[VideoFormat] = None,
     ) -> dict:
         """Process a pre-built VideoScript through voice synthesis and video."""
         return self._run_single_topic(
@@ -400,6 +430,8 @@ class ContentAutomationPipeline:
             skip_video=skip_video,
             use_remotion=use_remotion,
             language=language,
+            profile=profile,
+            video_format=video_format,
         )
 
     # ─── Helpers ──────────────────────────────────────────────────────────────
@@ -520,11 +552,14 @@ Examples:
     # Content options
     parser.add_argument("--topic", help="Single topic to generate content for")
     parser.add_argument("--topics", help="Comma-separated list of topics")
-    parser.add_argument("--platform", default="youtube",
-                        choices=["youtube", "shorts", "tiktok", "instagram"],
-                        help="Target platform (default: youtube)")
-    parser.add_argument("--formats", default=",".join(OUTPUT_FORMATS),
-                        help="Comma-separated output formats (default: youtube,shorts,tiktok)")
+    parser.add_argument("--platform", default=None,
+                        choices=["youtube", "shorts", "reels", "tiktok", "instagram"],
+                        help="Target platform preset (default: youtube)")
+    parser.add_argument("--ratio", "--aspect-ratio", default=None,
+                        choices=["16:9", "9:16", "1:1", "landscape", "portrait", "square"],
+                        help="Target aspect ratio (16:9, 9:16, 1:1)")
+    parser.add_argument("--formats", default=None,
+                        help="Comma-separated output formats (default: matching target platform format)")
     parser.add_argument("--from-script", type=Path,
                         help="Load a pre-generated script JSON file")
 
@@ -601,12 +636,26 @@ Examples:
         config.OUTPUT_DIR = Path(args.output_dir)
         config.OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
+    # Resolve platform profile and video format with conflict detection
+    try:
+        profile, video_format = resolve_profile_and_format(args.platform, args.ratio)
+    except ArgumentConflictError as err:
+        logger.error("Argument conflict: %s", err)
+        print(f"\n❌ Configuration Error: {err}\n", file=sys.stderr)
+        sys.exit(2)
+    except ValueError as err:
+        logger.error("Configuration error: %s", err)
+        print(f"\n❌ Configuration Error: {err}\n", file=sys.stderr)
+        sys.exit(2)
+
+    active_formats = [f.strip() for f in args.formats.split(",")] if args.formats else [profile.id]
+
     # Run pipeline
     pipeline = ContentAutomationPipeline()
     pipeline.run(
         topics=topics,
-        platform=args.platform,
-        formats=[f.strip() for f in args.formats.split(",")],
+        platform=profile.id,
+        formats=active_formats,
         voice_id=args.voice_id,
         voice_name=args.voice_name,
         language=args.language,
@@ -614,6 +663,8 @@ Examples:
         skip_video=args.no_video,
         use_remotion=args.remotion,
         custom_script=custom_script,
+        profile=profile,
+        video_format=video_format,
     )
 
 

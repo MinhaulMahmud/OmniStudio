@@ -61,6 +61,7 @@ class VideoComposer:
     FORMAT_CONFIG = {
         "youtube":    {"width": 1920, "height": 1080, "suffix": "_youtube"},
         "shorts":     {"width": 1080, "height": 1920, "suffix": "_shorts"},
+        "reels":      {"width": 1080, "height": 1920, "suffix": "_reels"},
         "tiktok":     {"width": 1080, "height": 1920, "suffix": "_tiktok"},
         "instagram":  {"width": 1080, "height": 1080, "suffix": "_instagram"},
     }
@@ -176,6 +177,54 @@ class VideoComposer:
 
         return None
 
+    def get_video_dimensions(self, video_path: Path) -> tuple[Optional[int], Optional[int]]:
+        """Get video width and height using ffprobe or ffmpeg."""
+        if self.ffprobe and self._is_executable(self.ffprobe):
+            try:
+                result = subprocess.run(
+                    [
+                        self.ffprobe, "-v", "quiet",
+                        "-print_format", "json",
+                        "-show_streams",
+                        "-select_streams", "v:0",
+                        str(video_path),
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+                if result.returncode == 0:
+                    import json
+                    data = json.loads(result.stdout)
+                    streams = data.get("streams", [])
+                    if streams:
+                        w = streams[0].get("width")
+                        h = streams[0].get("height")
+                        if w and h:
+                            return int(w), int(h)
+            except Exception as exc:
+                logger.debug("ffprobe video dimension check failed: %s", exc)
+
+        # Fall back to parsing ffmpeg -i stderr
+        try:
+            result = subprocess.run(
+                [self.ffmpeg, "-i", str(video_path)],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            # Match "Video: ... 1080x1920"
+            match = re.search(r"Stream #\d+:\d+.*?: Video:.*?,\s*(\d{2,5})x(\d{2,5})", result.stderr)
+            if match:
+                return int(match.group(1)), int(match.group(2))
+            match_generic = re.search(r",\s*(\d{2,5})x(\d{2,5})[\s,]", result.stderr)
+            if match_generic:
+                return int(match_generic.group(1)), int(match_generic.group(2))
+        except Exception as exc:
+            logger.warning("Could not get video dimensions: %s", exc)
+
+        return None, None
+
     # ─── Video Composition ────────────────────────────────────────────────────
 
     def compose(
@@ -187,6 +236,9 @@ class VideoComposer:
         background_path: Optional[Path] = None,
         format_name: str = "youtube",
         narration_text: Optional[str] = None,
+        burn_captions: Optional[bool] = None,
+        profile: Optional[Any] = None,
+        video_format: Optional[Any] = None,
     ) -> Optional[Path]:
         """
         Compose the final video from audio + background + subtitles.
@@ -197,14 +249,26 @@ class VideoComposer:
             title: Video title (shown as text overlay if no background).
             subtitle_chunks: Pre-generated subtitle chunks.
             background_path: Optional background video or image.
-            format_name: Output format (youtube, shorts, tiktok).
+            format_name: Output format (youtube, shorts, reels, tiktok, instagram).
             narration_text: Text to auto-generate subtitles from.
+            burn_captions: Whether to burn subtitles & header into video.
+                           If None: Defaults to False when background_path exists (Remotion owns
+                           on-screen typography), True when fallback gradient is used.
+            profile: Optional PlatformProfile.
+            video_format: Optional VideoFormat.
 
         Returns:
             Path to the composed video, or None on failure.
         """
-        fmt = self.FORMAT_CONFIG.get(format_name, self.FORMAT_CONFIG["youtube"])
-        width, height = fmt["width"], fmt["height"]
+        if video_format is not None:
+            width = getattr(video_format, "width", 1920)
+            height = getattr(video_format, "height", 1080)
+        elif profile is not None and hasattr(profile, "format"):
+            width = getattr(profile.format, "width", 1920)
+            height = getattr(profile.format, "height", 1080)
+        else:
+            fmt = self.FORMAT_CONFIG.get(format_name, self.FORMAT_CONFIG["youtube"])
+            width, height = fmt["width"], fmt["height"]
 
         audio_path = Path(audio_path)
         output_path = Path(output_path)
@@ -215,16 +279,26 @@ class VideoComposer:
         audio_duration = (audio_ms / 1000) if audio_ms else None
         logger.info("Audio duration: %.1fs", audio_duration or 0)
 
-        # Generate subtitles if needed
-        if GENERATE_CAPTIONS and not subtitle_chunks and narration_text:
-            subtitle_chunks = self.subtitle_gen.generate(narration_text, audio_ms)
+        # Single Caption Ownership:
+        # If background_path exists (Remotion visual engine), Remotion renders animated motion typography.
+        # FFmpeg subtitle burning is disabled to prevent duplicate overlapping text.
+        if burn_captions is None:
+            burn_captions = not (background_path and background_path.exists())
 
-        # Save subtitle file for FFmpeg
+        # Generate subtitles only if burning captions is active
         subtitle_file = None
-        if subtitle_chunks:
-            subtitle_file = output_path.with_suffix(".ass")
-            self.subtitle_gen.save(subtitle_chunks, subtitle_file, fmt="ass",
-                                   style="reels" if height > width else "default")
+        if burn_captions:
+            if GENERATE_CAPTIONS and not subtitle_chunks and narration_text:
+                subtitle_chunks = self.subtitle_gen.generate(narration_text, audio_ms)
+
+            if subtitle_chunks:
+                subtitle_file = output_path.with_suffix(".ass")
+                self.subtitle_gen.save(
+                    subtitle_chunks,
+                    subtitle_file,
+                    fmt="ass",
+                    style="reels" if height > width else "default",
+                )
 
         # Build FFmpeg command
         cmd = self._build_ffmpeg_command(
@@ -236,9 +310,10 @@ class VideoComposer:
             background_path=background_path,
             subtitle_file=subtitle_file,
             title=title,
+            burn_captions=burn_captions,
         )
 
-        logger.info("🎬 Composing video: %s", output_path.name)
+        logger.info("🎬 Composing video: %s (%dx%d)", output_path.name, width, height)
         logger.debug("FFmpeg command: %s", " ".join(cmd))
 
         try:
@@ -276,23 +351,37 @@ class VideoComposer:
         background_path: Optional[Path],
         subtitle_file: Optional[Path],
         title: str,
+        burn_captions: bool = False,
     ) -> list[str]:
-        """Build the FFmpeg command for video composition."""
+        """Build the FFmpeg command for video composition with non-destructive aspect handling."""
         cmd = [self.ffmpeg, "-y"]  # -y = overwrite output
 
-        # Input 0: Background
-        if background_path and background_path.exists():
+        # Check background dimensions and aspect ratio
+        has_bg = bool(background_path and background_path.exists())
+        aspect_mismatch = False
+
+        if has_bg:
             suffix = background_path.suffix.lower()
             if suffix in {".mp4", ".mov", ".avi", ".mkv", ".webm"}:
-                # Loop background video to match audio length
                 if audio_duration:
                     cmd += ["-stream_loop", "-1", "-t", str(audio_duration + 1)]
                 cmd += ["-i", str(background_path)]
             else:
-                # Static image background
                 if audio_duration:
                     cmd += ["-loop", "1", "-t", str(audio_duration + 1)]
                 cmd += ["-i", str(background_path)]
+
+            bg_w, bg_h = self.get_video_dimensions(background_path)
+            if bg_w and bg_h:
+                bg_ratio = bg_w / bg_h
+                target_ratio = width / height
+                if abs(bg_ratio - target_ratio) > 0.02:
+                    aspect_mismatch = True
+                    logger.warning(
+                        "⚠️ Aspect ratio mismatch: background (%dx%d, %.2f) vs target (%dx%d, %.2f). "
+                        "Applying non-destructive frosted-glass blurred padding; content will NOT be cropped.",
+                        bg_w, bg_h, bg_ratio, width, height, target_ratio,
+                    )
         else:
             # Dynamic animated tech gradient background instead of a blank canvas
             duration_arg = f":duration={audio_duration + 1}" if audio_duration else ""
@@ -304,48 +393,54 @@ class VideoComposer:
         # Input 1: Audio
         cmd += ["-i", str(audio_path)]
 
-        # ── Video filter chain ──────────────────────────────────────────────
-        vf_parts = []
-
-        # 1. Scale and crop to target resolution
-        vf_parts.append(
-            f"scale={width}:{height}:force_original_aspect_ratio=increase,"
-            f"crop={width}:{height}"
-        )
-
-        # 2. Top Title Header Card overlay
-        if title and subtitle_file:
-            safe_hdr = title[:45].replace("'", "\\'").replace(":", "\\:")
-            vf_parts.append(
-                f"drawtext=text='{safe_hdr}':fontsize=36:fontcolor=white"
-                f":x=(w-text_w)/2:y=60:shadowcolor=black@0.8:shadowx=2:shadowy=2"
-                f":box=1:boxcolor=0x070714@0.7:boxborderw=12"
+        # ── Filter Complex ──────────────────────────────────────────────────
+        filter_steps = []
+        if aspect_mismatch:
+            # Professional non-destructive blurred pillarbox / letterbox
+            filter_steps.append(
+                f"[0:v]split=2[vbg][vfg];"
+                f"[vbg]scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height},boxblur=20:5[vbgblur];"
+                f"[vfg]scale={width}:{height}:force_original_aspect_ratio=decrease[vfgscaled];"
+                f"[vbgblur][vfgscaled]overlay=(W-w)/2:(H-h)/2[vbase]"
             )
+        else:
+            # Exact or standard scaling
+            filter_steps.append(f"[0:v]scale={width}:{height}[vbase]")
 
-        # 3. Subtitle overlay
-        if subtitle_file and subtitle_file.exists():
-            # Escape Windows path for FFmpeg
-            safe_sub = str(subtitle_file).replace("\\", "/").replace(":", "\\:")
-            vf_parts.append(f"ass='{safe_sub}'")
-        elif title:
-            # Simple text title overlay
-            safe_title = title[:60].replace("'", "\\'").replace(":", "\\:")
-            vf_parts.append(
-                f"drawtext=text='{safe_title}'"
-                f":fontsize={CAPTION_FONT_SIZE}"
-                f":fontcolor={CAPTION_FONT_COLOR}"
-                f":shadowcolor={CAPTION_SHADOW_COLOR}@0.8"
-                f":shadowx=2:shadowy=2"
-                f":x=(w-text_w)/2:y=h-th-80"
-                f":box=1:boxcolor=black@0.4:boxborderw=10"
-            )
+        current_v = "[vbase]"
 
-        vf = ",".join(vf_parts)
+        # Subtitles & Titles only when burn_captions is True
+        if burn_captions:
+            if title and subtitle_file:
+                safe_hdr = title[:45].replace("'", "\\'").replace(":", "\\:")
+                filter_steps.append(
+                    f"{current_v}drawtext=text='{safe_hdr}':fontsize=36:fontcolor=white"
+                    f":x=(w-text_w)/2:y=60:shadowcolor=black@0.8:shadowx=2:shadowy=2"
+                    f":box=1:boxcolor=0x070714@0.7:boxborderw=12[vhdr]"
+                )
+                current_v = "[vhdr]"
 
-        # ── Build filter_complex or vf ──────────────────────────────────────
+            if subtitle_file and subtitle_file.exists():
+                safe_sub = str(subtitle_file).replace("\\", "/").replace(":", "\\:")
+                filter_steps.append(f"{current_v}ass='{safe_sub}'[vsub]")
+                current_v = "[vsub]"
+            elif title:
+                safe_title = title[:60].replace("'", "\\'").replace(":", "\\:")
+                filter_steps.append(
+                    f"{current_v}drawtext=text='{safe_title}'"
+                    f":fontsize={CAPTION_FONT_SIZE}"
+                    f":fontcolor={CAPTION_FONT_COLOR}"
+                    f":shadowcolor={CAPTION_SHADOW_COLOR}@0.8"
+                    f":shadowx=2:shadowy=2"
+                    f":x=(w-text_w)/2:y=h-th-80"
+                    f":box=1:boxcolor=black@0.4:boxborderw=10[vtitle]"
+                )
+                current_v = "[vtitle]"
+
+        filter_complex_str = ";".join(filter_steps)
         cmd += [
-            "-vf", vf,
-            "-map", "0:v",
+            "-filter_complex", filter_complex_str,
+            "-map", current_v,
             "-map", "1:a",
         ]
 
@@ -361,7 +456,10 @@ class VideoComposer:
             "-pix_fmt", "yuv420p",   # Required for broad compatibility
             "-movflags", "+faststart",  # Web-optimized
             "-shortest",             # Match video length to shortest input
+            str(output_path),
         ]
+        return cmd
+
 
         if audio_duration:
             cmd += ["-t", str(audio_duration)]

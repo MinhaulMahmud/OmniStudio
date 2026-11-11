@@ -88,6 +88,10 @@ class RemotionRenderer:
         narration_text: str = "",
         composition_id: Optional[str] = None,
         fps: int = VIDEO_FPS,
+        profile: Optional[Any] = None,
+        video_format: Optional[Any] = None,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
     ) -> Optional[Path]:
         """
         Render a motion graphics video synchronized with audio narration.
@@ -95,6 +99,37 @@ class RemotionRenderer:
         if not self.is_available():
             logger.warning("Remotion or Node.js environment is not available.")
             return None
+
+        # Resolve target dimensions and layout mode
+        target_width = 1920
+        target_height = 1080
+        target_aspect_ratio = "16:9"
+        target_layout_mode = "landscape"
+
+        if video_format is not None:
+            target_width = getattr(video_format, "width", target_width)
+            target_height = getattr(video_format, "height", target_height)
+            target_aspect_ratio = getattr(video_format, "aspect_ratio", target_aspect_ratio)
+            layout_mode_attr = getattr(video_format, "layout_mode", None)
+            if hasattr(layout_mode_attr, "value"):
+                target_layout_mode = layout_mode_attr.value
+            elif layout_mode_attr:
+                target_layout_mode = str(layout_mode_attr)
+        elif profile is not None and hasattr(profile, "format"):
+            fmt = profile.format
+            target_width = getattr(fmt, "width", target_width)
+            target_height = getattr(fmt, "height", target_height)
+            target_aspect_ratio = getattr(fmt, "aspect_ratio", target_aspect_ratio)
+            layout_mode_attr = getattr(fmt, "layout_mode", None)
+            if hasattr(layout_mode_attr, "value"):
+                target_layout_mode = layout_mode_attr.value
+            elif layout_mode_attr:
+                target_layout_mode = str(layout_mode_attr)
+
+        if width is not None:
+            target_width = width
+        if height is not None:
+            target_height = height
 
         audio_path = Path(audio_path).resolve()
         output_path = Path(output_path).resolve()
@@ -178,10 +213,12 @@ class RemotionRenderer:
         title_lower = title.lower()
         is_model_weights_topic = any(k in title_lower for k in ["model weight", "compute power", "vram", "quantization", "bandwidth"])
         is_gearbox_topic = any(k in title_lower for k in ["gearbox", "gear box", "transmission", "bike gear", "motorcycle gear"])
+        dynamic_scene_file = self.remotion_dir / "src" / "scenes" / "generated" / "DynamicTopicScene.tsx"
 
         if not composition_id:
-            # Dedicated specialized compositions when duration matches, or DynamicExplainer with embedded VisualMechanismViewport
-            if is_gearbox_topic and abs(total_frames - 1600) < 90:
+            if dynamic_scene_file.exists():
+                composition_id = "DynamicTopicScene"
+            elif is_gearbox_topic and abs(total_frames - 1600) < 90:
                 composition_id = "BikeGearboxExplainer"
             elif is_model_weights_topic and abs(total_frames - 2367) < 90:
                 composition_id = "ModelWeightsExplainer"
@@ -197,6 +234,10 @@ class RemotionRenderer:
             "sections": dynamic_sections,
             "totalFrames": total_frames,
             "audioFile": audio_file_name,
+            "width": target_width,
+            "height": target_height,
+            "aspectRatio": target_aspect_ratio,
+            "layoutMode": target_layout_mode,
         }
 
         props_file = self.remotion_dir / f"props_{output_path.stem}.json"
@@ -216,6 +257,8 @@ class RemotionRenderer:
             composition_id,
             str(output_path),
             f"--props={str(props_file)}",
+            f"--width={target_width}",
+            f"--height={target_height}",
             "--codec=h264",
             "--overwrite",
         ]

@@ -1,12 +1,14 @@
 """
 AI Remotion Visual Synthesizer
-===============================
-Dynamically generates custom React/TypeScript Remotion scene code (.tsx)
-at runtime for ANY topic using OpenRouter, guided by official remotion-dev/skills,
-validated by validate_scene.py, with an automated repair loop and deterministic fallback.
+==============================
+Generates dynamic Remotion React/TSX scene code (DynamicTopicScene.tsx) for ANY topic.
+Integrates official remotion-dev/skills prompt, PlatformProfile safe zones,
+layout modes (landscape, portrait, square), AST validation, repair loop, and
+deterministic fallback compositions.
 """
 from __future__ import annotations
 
+import json
 import logging
 import os
 import re
@@ -23,6 +25,12 @@ from config import (
 )
 from remotion_skills_loader import load_remotion_skills_prompt, get_skills_version
 from validate_scene import validate_scene_code, Violation
+from platform_profiles import (
+    PlatformProfile,
+    VideoFormat,
+    LayoutMode,
+    resolve_profile_and_format,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,40 +44,33 @@ PLAYWRIGHT_NODE_DIR = r"C:\Users\MSI\AppData\Roaming\Python\Python313\site-packa
 
 PRIMITIVES_API_REFERENCE = """
 ### AVAILABLE TESTED PRIMITIVES (Import from '../primitives/'):
-1. <TitleCard title={string} subtitle?: string badge?: string accentColor?: string />
-   - Main title card with spring-animated scaling and safe-area margins.
-2. <BulletReveal bullets={string[]} accentColor?: string delayFrames?: number staggerFrames?: number maxWidth?: number />
-   - Numbered bullet points revealed sequentially via frame interpolation.
-3. <BarChart items={Array<{ label: string, value: number, formattedValue?: string, color?: string }>} title?: string maxValue?: number />
+1. <SceneContainer layoutMode={"landscape"|"portrait"|"square"} safeZone={{top, bottom, left, right}}>
+   - Top-level root layout wrapper enforcing responsive container bounds and device safe zones.
+2. <TitleCard title={string} subtitle?: string badge?: string accentColor?: string layoutMode?: string />
+   - Main title card with spring-animated scaling and safe typography scaling.
+3. <BulletReveal bullets={string[]} accentColor?: string delayFrames?: number staggerFrames?: number maxWidth?: number|string layoutMode?: string />
+   - Numbered bullet points revealed sequentially with responsive card widths.
+4. <BarChart items={Array<{ label: string, value: number, formattedValue?: string, color?: string }>} title?: string maxValue?: number layoutMode?: string />
    - Animated horizontal data bars growing smoothly.
-4. <LineChart points={Array<{ x: string|number, y: number }>} title?: string lineColor?: string />
+5. <LineChart points={Array<{ x: string|number, y: number }>} title?: string lineColor?: string layoutMode?: string />
    - SVG line chart with animated stroke and shaded gradient.
-5. <Timeline steps={Array<{ title: string, description?: string }>} activeStep?: number accentColor?: string />
-   - Sequential process nodes with glowing active connector track.
-6. <DiagramNodes nodes={Array<{ id: string, label: string, sub?: string, x: number, y: number }>} edges={Array<{ from: string, to: string }>} title?: string />
+6. <Timeline steps={Array<{ title: string, description?: string }>} activeStep?: number accentColor?: string layoutMode?: string />
+   - Sequential process nodes (horizontal on landscape; vertical stepper on portrait).
+7. <DiagramNodes nodes={Array<{ id: string, label: string, sub?: string, x: number, y: number }>} edges={Array<{ from: string, to: string }>} title?: string layoutMode?: string />
    - Network / system block diagram with animated signal pulses.
-7. <Counter toValue={number} label={string} fromValue?: number unit?: string prefix?: string />
+8. <Counter toValue={number} label={string} fromValue?: number unit?: string prefix?: string layoutMode?: string />
    - High-impact animated metric counter.
-8. <CaptionOverlay text={string} />
-   - Bottom floating caption bar for spoken narration.
+9. <CaptionOverlay text={string} layoutMode?: string />
+   - Spoken narration caption bar (automatically elevated to clear TikTok/Shorts overlays).
 """
 
 FEW_SHOT_EXAMPLE_1 = """
-// Example 1: Physical / Engineering Process (e.g. Aerodynamics or Turbine)
+// Example 1: Landscape 16:9 Technical Explainer
 import React from "react";
-import { Sequence, useCurrentFrame, useVideoConfig, interpolate, spring } from "remotion";
-import { TitleCard } from "../primitives/TitleCard";
-import { BulletReveal } from "../primitives/BulletReveal";
-import { Timeline } from "../primitives/Timeline";
-import { CaptionOverlay } from "../primitives/CaptionOverlay";
+import { Sequence, useCurrentFrame, useVideoConfig } from "remotion";
+import { SceneContainer, TitleCard, BulletReveal, Timeline, CaptionOverlay } from "../primitives";
 
-export interface DynamicTopicSceneProps {
-  title?: string;
-  subtitle?: string;
-  sections?: Array<{ heading: string; text: string }>;
-}
-
-export const DynamicTopicScene: React.FC<DynamicTopicSceneProps> = ({
+export const DynamicTopicScene: React.FC<any> = ({
   title = "Jet Engine Thrust Cycle",
   subtitle = "Brayton Thermodynamic Cycle",
 }) => {
@@ -80,99 +81,101 @@ export const DynamicTopicScene: React.FC<DynamicTopicSceneProps> = ({
   const sec2Dur = Math.round(8 * fps);
   const sec3Dur = Math.round(10 * fps);
 
-  // Custom SVG mechanism: Compressor & Turbine fan rotation
-  const fanRotation = frame * 12;
-
   return (
-    <div style={{ flex: 1, backgroundColor: "#060913", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+    <SceneContainer layoutMode="landscape" safeZone={{ top: 80, bottom: 80, left: 100, right: 100 }}>
       {/* Sequence 1: Hook & Title */}
       <Sequence from={0} durationInFrames={sec1Dur}>
-        <TitleCard title={title} subtitle={subtitle} badge="PROPULSION KINEMATICS" />
+        <TitleCard title={title} subtitle={subtitle} badge="PROPULSION KINEMATICS" layoutMode="landscape" />
       </Sequence>
 
       {/* Sequence 2: 4-Stage Process Timeline */}
       <Sequence from={sec1Dur} durationInFrames={sec2Dur}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
-          <h2 style={{ fontSize: "44px", fontWeight: 800, margin: 0, color: "#38bdf8" }}>Four Stages of Jet Thrust</h2>
-          <Timeline steps={[
-            { title: "Intake", description: "Huge fan scoops air" },
-            { title: "Compress", description: "Blades squeeze air 40:1" },
-            { title: "Combust", description: "Fuel ignites at 1700C" },
-            { title: "Exhaust", description: "High velocity nozzle thrust" },
-          ]} />
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px", width: "100%" }}>
+          <h2 style={{ fontSize: "40px", fontWeight: 800, margin: 0, color: "#38bdf8" }}>Four Stages of Jet Thrust</h2>
+          <Timeline
+            layoutMode="landscape"
+            steps={[
+              { title: "Intake", description: "Huge fan scoops air" },
+              { title: "Compress", description: "Blades squeeze air 40:1" },
+              { title: "Combust", description: "Fuel ignites at 1700C" },
+              { title: "Exhaust", description: "High velocity nozzle thrust" },
+            ]}
+          />
         </div>
       </Sequence>
 
-      {/* Sequence 3: Visual Mechanism & Bullets */}
+      {/* Sequence 3: Key Takeaways */}
       <Sequence from={sec1Dur + sec2Dur} durationInFrames={sec3Dur}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "1600px", padding: "0 60px" }}>
-          {/* Custom SVG Turbine Rotor */}
-          <div style={{ width: "650px", height: "450px", backgroundColor: "rgba(15,23,42,0.85)", borderRadius: "24px", border: "1px solid rgba(56,189,248,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg viewBox="0 0 400 400" style={{ width: "360px", height: "360px" }}>
-              <circle cx="200" cy="200" r="160" fill="none" stroke="#334155" strokeWidth="4" />
-              <g transform={`translate(200, 200) rotate(${fanRotation})`}>
-                {[...Array(12)].map((_, i) => (
-                  <path key={i} d="M 0 0 C 20 -40, 40 -80, 10 -150 C -10 -80, -20 -40, 0 0 Z" fill="#38bdf8" opacity="0.8" transform={`rotate(${i * 30})`} />
-                ))}
-                <circle cx="0" cy="0" r="28" fill="#0f172a" stroke="#38bdf8" strokeWidth="3" />
-              </g>
-            </svg>
-          </div>
-          <BulletReveal bullets={[
+        <BulletReveal
+          layoutMode="landscape"
+          bullets={[
             "Compressor raises air pressure exponentially before ignition.",
             "Turbine extracts energy from expanding gas to power the front fan.",
             "Newton's 3rd law generates massive forward momentum."
-          ]} maxWidth={750} />
-        </div>
+          ]}
+        />
       </Sequence>
 
-      <CaptionOverlay text={subtitle} />
-    </div>
+      <CaptionOverlay text={subtitle} layoutMode="landscape" />
+    </SceneContainer>
   );
 };
 """
 
 FEW_SHOT_EXAMPLE_2 = """
-// Example 2: Computing & Architectural System (e.g. Distributed Consensus or AI)
+// Example 2: Portrait 9:16 Mobile Short / Reel / TikTok
 import React from "react";
 import { Sequence, useCurrentFrame, useVideoConfig } from "remotion";
-import { TitleCard } from "../primitives/TitleCard";
-import { DiagramNodes } from "../primitives/DiagramNodes";
-import { Counter } from "../primitives/Counter";
-import { CaptionOverlay } from "../primitives/CaptionOverlay";
+import { SceneContainer, TitleCard, Timeline, BulletReveal, CaptionOverlay } from "../primitives";
 
 export const DynamicTopicScene: React.FC<any> = ({
-  title = "Distributed Raft Consensus",
-  subtitle = "Fault Tolerant State Replication",
+  title = "How Neural Nets Learn",
+  subtitle = "Backpropagation in 60 Seconds",
 }) => {
   const { fps } = useVideoConfig();
 
+  const sec1Dur = Math.round(4 * fps);
+  const sec2Dur = Math.round(10 * fps);
+  const sec3Dur = Math.round(10 * fps);
+
   return (
-    <div style={{ flex: 1, backgroundColor: "#070b14", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative" }}>
-      <Sequence from={0} durationInFrames={Math.round(5 * fps)}>
-        <TitleCard title={title} subtitle={subtitle} badge="DISTRIBUTED COMPUTING" accentColor="#818cf8" />
+    <SceneContainer layoutMode="portrait" safeZone={{ top: 140, bottom: 320, left: 80, right: 140 }}>
+      {/* Sequence 1: Hook Headline at Top Safe Zone */}
+      <Sequence from={0} durationInFrames={sec1Dur}>
+        <TitleCard title={title} subtitle={subtitle} badge="AI EXPLAINED" layoutMode="portrait" />
       </Sequence>
-      <Sequence from={Math.round(5 * fps)} durationInFrames={Math.round(12 * fps)}>
-        <div style={{ display: "flex", alignItems: "center", gap: "50px" }}>
-          <DiagramNodes
-            title="Cluster Topology"
-            nodes={[
-              { id: "leader", label: "Leader Node", sub: "Term 4 (Active)", x: 50, y: 30, color: "#10b981" },
-              { id: "f1", label: "Follower 1", sub: "Replicated", x: 25, y: 75, color: "#38bdf8" },
-              { id: "f2", label: "Follower 2", sub: "Replicated", x: 75, y: 75, color: "#38bdf8" },
+
+      {/* Sequence 2: Vertical Stepper in Center */}
+      <Sequence from={sec1Dur} durationInFrames={sec2Dur}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px", width: "100%" }}>
+          <h2 style={{ fontSize: "36px", fontWeight: 800, margin: 0, color: "#38bdf8", textAlign: "center" }}>
+            The 3-Step Feedback Loop
+          </h2>
+          <Timeline
+            layoutMode="portrait"
+            steps={[
+              { title: "Forward Pass", description: "Compute initial prediction" },
+              { title: "Calculate Loss", description: "Measure distance from target" },
+              { title: "Backpropagation", description: "Update weights via gradient descent" },
             ]}
-            edges={[
-              { from: "leader", to: "f1" },
-              { from: "leader", to: "f2" },
-            ]}
-            width={850}
-            height={420}
           />
-          <Counter toValue={150000} label="Operations Per Second" unit="ops/s" accentColor="#10b981" />
         </div>
       </Sequence>
-      <CaptionOverlay text={subtitle} />
-    </div>
+
+      {/* Sequence 3: Key Bullets Above Bottom Safe Zone */}
+      <Sequence from={sec1Dur + sec2Dur} durationInFrames={sec3Dur}>
+        <BulletReveal
+          layoutMode="portrait"
+          bullets={[
+            "Weights start as random Gaussian noise.",
+            "Gradients point toward lowest loss.",
+            "Billions of parameters converge simultaneously."
+          ]}
+        />
+      </Sequence>
+
+      <CaptionOverlay text={subtitle} layoutMode="portrait" />
+    </SceneContainer>
   );
 };
 """
@@ -206,6 +209,8 @@ class RemotionSynthesizer:
         script: Any,
         audio_duration_s: float = 60.0,
         visual_keywords: Optional[list[str]] = None,
+        profile: Optional[PlatformProfile] = None,
+        video_format: Optional[VideoFormat] = None,
         max_repair_attempts: int = 3,
     ) -> Path:
         """
@@ -214,24 +219,28 @@ class RemotionSynthesizer:
         Returns:
             Path to the written DynamicTopicScene.tsx file.
         """
+        if not profile or not video_format:
+            profile, video_format = resolve_profile_and_format()
+
         start_time = time.time()
         visual_keywords = visual_keywords or []
         GENERATED_DIR.mkdir(parents=True, exist_ok=True)
 
         logger.info("⚛️  AI Remotion Synthesizer starting for: '%s'", topic)
-        logger.info("   Skills Version : %s", self.skills_version[:10])
-        logger.info("   Model          : %s", self.model)
-        logger.info("   Duration       : %.1fs (~%d frames)", audio_duration_s, int(audio_duration_s * VIDEO_FPS))
+        logger.info("   Platform Profile: %s (%s, %s layout)", profile.display_name, video_format.aspect_ratio, video_format.layout_mode.value)
+        logger.info("   Skills Version  : %s", self.skills_version[:10])
+        logger.info("   Model           : %s", self.model)
+        logger.info("   Duration        : %.1fs (~%d frames)", audio_duration_s, int(audio_duration_s * video_format.fps))
 
         # Check if API key is configured
         if not self.api_key:
             logger.warning("No OpenRouter API key found. Using deterministic primitives fallback.")
-            self._write_fallback(topic, script, audio_duration_s)
+            self._write_fallback(topic, script, audio_duration_s, profile, video_format)
             return OUTPUT_FILE
 
         # Build initial prompt
         system_prompt = self._build_system_prompt()
-        user_prompt = self._build_user_prompt(topic, script, audio_duration_s, visual_keywords)
+        user_prompt = self._build_user_prompt(topic, script, audio_duration_s, visual_keywords, profile, video_format)
 
         attempt = 0
         current_code = ""
@@ -250,9 +259,10 @@ class RemotionSynthesizer:
                 repair_instructions = (
                     f"Your previous code had {len(violations)} validation violations:\n"
                     + "\n".join(f"- {str(v)}" for v in violations)
-                    + "\n\nPlease rewrite the complete DynamicTopicScene.tsx file to FIX ALL VIOLATIONS. "
+                    + f"\n\nPlease rewrite the complete DynamicTopicScene.tsx file to FIX ALL VIOLATIONS.\n"
+                    f"Target Layout: {video_format.layout_mode.value.upper()} ({video_format.aspect_ratio}, {video_format.width}x{video_format.height}).\n"
                     "Remember: strictly NO CSS transitions, NO @keyframes, use ONLY allowed imports (../primitives/*), "
-                    "and calculate frames using fps from useVideoConfig(). Return ONLY valid TypeScript code."
+                    "never hardcode wide widths (>900px), wrap inside <SceneContainer>, and calculate frames using fps from useVideoConfig(). Return ONLY valid TypeScript code."
                 )
                 prompt_messages = [
                     {"role": "system", "content": system_prompt},
@@ -295,7 +305,7 @@ class RemotionSynthesizer:
 
         # Fallback if all attempts fail
         logger.warning("All %d AI synthesis attempts failed. Falling back to deterministic scene composition.", max_repair_attempts)
-        self._write_fallback(topic, script, audio_duration_s)
+        self._write_fallback(topic, script, audio_duration_s, profile, video_format)
         return OUTPUT_FILE
 
     def _build_system_prompt(self) -> str:
@@ -310,9 +320,10 @@ You write complete, bug-free TypeScript React scene components for Remotion 4.0.
 CRITICAL RULES:
 1. Output MUST be ONE valid .tsx file exporting `export const DynamicTopicScene: React.FC<any> = ...`.
 2. Do NOT output any markdown prose, notes, or explanations. Start immediately with imports.
-3. Import primitives from '../primitives/' (e.g. `import {{ TitleCard, BulletReveal, Timeline, Counter }} from "../primitives";`).
+3. Import primitives from '../primitives/' (e.g. `import {{ SceneContainer, TitleCard, BulletReveal, Timeline, Counter }} from "../primitives";`).
 4. NEVER use CSS transitions, CSS animations, or @keyframes.
 5. All timings must scale with fps from `useVideoConfig()`.
+6. NEVER set hardcoded wide pixel widths (e.g. width: '1600px'). Wrap the scene inside <SceneContainer layoutMode={...} safeZone={...}>.
 """
 
     def _build_user_prompt(
@@ -321,13 +332,15 @@ CRITICAL RULES:
         script: Any,
         audio_duration_s: float,
         visual_keywords: list[str],
+        profile: PlatformProfile,
+        video_format: VideoFormat,
     ) -> str:
         sections = getattr(script, "sections", [])
         title = getattr(script, "title", topic)
         hook = getattr(script, "hook", "")
 
         sec_lines = []
-        fps = VIDEO_FPS
+        fps = video_format.fps
         total_frames = int(audio_duration_s * fps)
         per_sec_frames = total_frames // max(len(sections) + 1, 1)
 
@@ -339,10 +352,14 @@ CRITICAL RULES:
 
         sections_desc = "\n".join(sec_lines)
         keywords_desc = ", ".join(visual_keywords) if visual_keywords else "technical diagrams, process steps"
+        sz = profile.safe_zone
 
         return f"""Generate DynamicTopicScene.tsx for:
 TOPIC: {topic}
 TITLE: {title}
+PLATFORM: {profile.display_name} ({profile.id})
+LAYOUT MODE: {video_format.layout_mode.value.upper()} (Aspect Ratio: {video_format.aspect_ratio}, Resolution: {video_format.width}x{video_format.height})
+DEVICE SAFE ZONE: Top: {sz.top}px, Bottom: {sz.bottom}px, Left: {sz.left}px, Right: {sz.right}px
 TOTAL DURATION: ~{audio_duration_s:.1f} seconds ({total_frames} frames at {fps} fps)
 VISUAL KEYWORDS: {keywords_desc}
 
@@ -350,13 +367,18 @@ SCRIPT TIMELINE BREAKDOWN:
 {sections_desc}
 
 FEW-SHOT EXAMPLES FOR INSPIRATION:
---- EXAMPLE 1 ---
+--- EXAMPLE 1 (Landscape 16:9) ---
 {FEW_SHOT_EXAMPLE_1}
 
---- EXAMPLE 2 ---
+--- EXAMPLE 2 (Portrait 9:16) ---
 {FEW_SHOT_EXAMPLE_2}
 
-Compose a multi-sequence scene using the tested primitives (TitleCard, BulletReveal, Timeline, BarChart, LineChart, DiagramNodes, Counter) and clean custom inline SVGs for any topic-specific mechanisms.
+LAYOUT INSTRUCTIONS:
+- If layoutMode is 'portrait' (9:16 Shorts/Reels/TikTok): Use single vertical stack, place TitleCard at top, Timeline/Diagram in middle, and BulletReveal above bottom safe zone ({sz.bottom}px).
+- If layoutMode is 'landscape' (16:9 YouTube): Use wide multi-column layout or centered wide card.
+- If layoutMode is 'square' (1:1 Instagram): Use centered square box layout.
+- Wrap the entire scene in: <SceneContainer layoutMode="{video_format.layout_mode.value}" safeZone={{{{ top: {sz.top}, bottom: {sz.bottom}, left: {sz.left}, right: {sz.right} }}}}>.
+
 Return ONLY valid .tsx code."""
 
     def _clean_code(self, raw: str) -> str:
@@ -398,7 +420,7 @@ Return ONLY valid .tsx code."""
 
     def _smoke_test_render(self, tsx_path: Path) -> tuple[bool, str]:
         """
-        Smoke test by rendering a single still frame at frame 30 using Node.
+        Smoke test by rendering a single still frame at frame 15 using Node.
         Catches runtime JavaScript / React errors that static validation misses.
         """
         cli_js = REMOTION_DIR / "node_modules" / "@remotion" / "cli" / "remotion-cli.js"
@@ -433,7 +455,7 @@ Return ONLY valid .tsx code."""
                 env=env,
                 capture_output=True,
                 text=True,
-                timeout=45,
+                timeout=90,
             )
             if res.returncode == 0 and temp_img.exists():
                 try:
@@ -443,19 +465,27 @@ Return ONLY valid .tsx code."""
                 return True, ""
 
             combined_out = (res.stderr or "") + "\n" + (res.stdout or "")
-            # If bundling reached 100% and getting composition succeeded, the React code is valid
-            # (any later ErrorEvent is an OS/sandbox localhost devtools socket restriction)
             if ("Bundling 100%" in combined_out or "Getting composition" in combined_out) and (
                 "ErrorEvent" in combined_out or "10013" in combined_out or "getaddrinfo" in combined_out
             ):
                 return True, ""
 
-            return False, res.stderr[-800:] if res.stderr else res.stdout[-800:]
+            err_msg = res.stderr[-500:] if res.stderr else res.stdout[-500:]
+            return False, err_msg
+        except subprocess.TimeoutExpired as exc:
+            return False, f"Timeout after 90s: {exc}"
         except Exception as exc:
             return False, str(exc)
 
-    def _write_fallback(self, topic: str, script: Any, audio_duration_s: float):
-        """Generate a guaranteed-valid deterministic composition from primitives."""
+    def _write_fallback(
+        self,
+        topic: str,
+        script: Any,
+        audio_duration_s: float,
+        profile: PlatformProfile,
+        video_format: VideoFormat,
+    ):
+        """Write deterministic layout-specific fallback composition."""
         title = getattr(script, "title", topic)
         hook = getattr(script, "hook", f"Understanding {topic}")
         raw_sections = getattr(script, "sections", [])
@@ -473,59 +503,147 @@ Return ONLY valid .tsx code."""
                 {"heading": "Key Takeaways", "text": "Practical engineering implications and efficiency."},
             ]
 
-        fallback_code = f"""import React from "react";
-import {{ Sequence, useCurrentFrame, useVideoConfig }} from "remotion";
-import {{ TitleCard }} from "../primitives/TitleCard";
-import {{ BulletReveal }} from "../primitives/BulletReveal";
-import {{ CaptionOverlay }} from "../primitives/CaptionOverlay";
+        mode = video_format.layout_mode.value
+        sz = profile.safe_zone
+        sec_dur_frames = max(4, int(audio_duration_s / max(len(sections_json) + 1, 1)))
+
+        if video_format.layout_mode == LayoutMode.PORTRAIT:
+            # Deterministic Portrait 9:16 Mobile Fallback
+            fallback_code = f"""import React from "react";
+import {{ Sequence, useCurrentFrame, useVideoConfig, interpolate }} from "remotion";
+import {{ SceneContainer, TitleCard, Timeline, BulletReveal, CaptionOverlay }} from "../primitives";
 
 export const DynamicTopicScene: React.FC<any> = () => {{
   const frame = useCurrentFrame();
   const {{ fps }} = useVideoConfig();
+  const opacity = interpolate(frame, [0, 15], [0, 1], {{ extrapolateRight: "clamp" }});
 
   const title = {repr(title)};
   const subtitle = {repr(hook)};
   const sections = {sections_json};
 
-  const secDuration = Math.round({max(4, int(audio_duration_s / max(len(sections_json) + 1, 1)))} * fps);
+  const secDuration = Math.round({sec_dur_frames} * fps);
 
   return (
-    <div
-      style={{{{
-        flex: 1,
-        backgroundColor: "#060913",
-        backgroundImage: "radial-gradient(circle at 50% 20%, #0d1e38 0%, #060913 75%)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "'Segoe UI', Roboto, sans-serif",
-        color: "#ffffff",
-        position: "relative",
-        padding: "40px",
-        overflow: "hidden",
-      }}}}
-    >
-      <Sequence from={{0}} durationInFrames={{secDuration}}>
-        <TitleCard title={{title}} subtitle={{subtitle}} badge="OMNISTUDIO TECHNICAL EXPLAINER" />
-      </Sequence>
+    <div style={{{{ opacity, width: "100%", height: "100%" }}}}>
+      <SceneContainer layoutMode="portrait" safeZone={{{{ top: {sz.top}, bottom: {sz.bottom}, left: {sz.left}, right: {sz.right} }}}}>
+        <Sequence from={{0}} durationInFrames={{secDuration}}>
+          <TitleCard title={{title}} subtitle={{subtitle}} badge="{profile.display_name.upper()}" layoutMode="portrait" />
+        </Sequence>
 
-      {{sections.map((sec, i) => {{
-        const start = (i + 1) * secDuration;
-        return (
-          <Sequence key={{i}} from={{start}} durationInFrames={{secDuration}}>
-            <div style={{{{ display: "flex", flexDirection: "column", alignItems: "center", gap: "24px" }}}}>
-              <h2 style={{{{ fontSize: "40px", fontWeight: 800, margin: 0, color: "#38bdf8" }}}}>{{sec.heading}}</h2>
-              <BulletReveal bullets={{[sec.text]}} maxWidth={{900}} />
-            </div>
-          </Sequence>
-        );
-      }})}}
+        <Sequence from={{secDuration}} durationInFrames={{secDuration * 2}}>
+          <div style={{{{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px", width: "100%" }}}}>
+            <h2 style={{{{ fontSize: "36px", fontWeight: 800, margin: 0, color: "#38bdf8", textAlign: "center" }}}}>
+              Key Structural Steps
+            </h2>
+            <Timeline
+              layoutMode="portrait"
+              steps={{sections.map(s => ({{ title: s.heading, description: s.text.slice(0, 70) }}))}}
+            />
+          </div>
+        </Sequence>
 
-      <CaptionOverlay text={{subtitle}} />
+        <Sequence from={{secDuration * 3}} durationInFrames={{secDuration * 2}}>
+          <BulletReveal
+            layoutMode="portrait"
+            bullets={{sections.map(s => s.text.slice(0, 110))}}
+          />
+        </Sequence>
+
+        <CaptionOverlay text={{subtitle}} layoutMode="portrait" />
+      </SceneContainer>
+    </div>
+  );
+}};
+"""
+        elif video_format.layout_mode == LayoutMode.SQUARE:
+            # Deterministic Square 1:1 Fallback
+            fallback_code = f"""import React from "react";
+import {{ Sequence, useCurrentFrame, useVideoConfig, interpolate }} from "remotion";
+import {{ SceneContainer, TitleCard, BulletReveal, CaptionOverlay }} from "../primitives";
+
+export const DynamicTopicScene: React.FC<any> = () => {{
+  const frame = useCurrentFrame();
+  const {{ fps }} = useVideoConfig();
+  const opacity = interpolate(frame, [0, 15], [0, 1], {{ extrapolateRight: "clamp" }});
+
+  const title = {repr(title)};
+  const subtitle = {repr(hook)};
+  const sections = {sections_json};
+
+  const secDuration = Math.round({sec_dur_frames} * fps);
+
+  return (
+    <div style={{{{ opacity, width: "100%", height: "100%" }}}}>
+      <SceneContainer layoutMode="square" safeZone={{{{ top: {sz.top}, bottom: {sz.bottom}, left: {sz.left}, right: {sz.right} }}}}>
+        <Sequence from={{0}} durationInFrames={{secDuration}}>
+          <TitleCard title={{title}} subtitle={{subtitle}} badge="{profile.display_name.upper()}" layoutMode="square" />
+        </Sequence>
+
+        {{sections.map((sec, i) => {{
+          const start = (i + 1) * secDuration;
+          return (
+            <Sequence key={{i}} from={{start}} durationInFrames={{secDuration}}>
+              <div style={{{{ display: "flex", flexDirection: "column", alignItems: "center", gap: "18px", width: "100%" }}}}>
+                <h2 style={{{{ fontSize: "32px", fontWeight: 800, margin: 0, color: "#38bdf8" }}}}>{{sec.heading}}</h2>
+                <BulletReveal bullets={{[sec.text]}} layoutMode="square" />
+              </div>
+            </Sequence>
+          );
+        }})}}
+
+        <CaptionOverlay text={{subtitle}} layoutMode="square" />
+      </SceneContainer>
+    </div>
+  );
+}};
+"""
+        else:
+            # Deterministic Landscape 16:9 Fallback
+            fallback_code = f"""import React from "react";
+import {{ Sequence, useCurrentFrame, useVideoConfig, interpolate }} from "remotion";
+import {{ SceneContainer, TitleCard, BulletReveal, Timeline, CaptionOverlay }} from "../primitives";
+
+export const DynamicTopicScene: React.FC<any> = () => {{
+  const frame = useCurrentFrame();
+  const {{ fps }} = useVideoConfig();
+  const opacity = interpolate(frame, [0, 15], [0, 1], {{ extrapolateRight: "clamp" }});
+
+  const title = {repr(title)};
+  const subtitle = {repr(hook)};
+  const sections = {sections_json};
+
+  const secDuration = Math.round({sec_dur_frames} * fps);
+
+  return (
+    <div style={{{{ opacity, width: "100%", height: "100%" }}}}>
+      <SceneContainer layoutMode="landscape" safeZone={{{{ top: {sz.top}, bottom: {sz.bottom}, left: {sz.left}, right: {sz.right} }}}}>
+        <Sequence from={{0}} durationInFrames={{secDuration}}>
+          <TitleCard title={{title}} subtitle={{subtitle}} badge="OMNISTUDIO TECHNICAL EXPLAINER" layoutMode="landscape" />
+        </Sequence>
+
+        <Sequence from={{secDuration}} durationInFrames={{secDuration * 2}}>
+          <div style={{{{ display: "flex", flexDirection: "column", alignItems: "center", gap: "24px", width: "100%" }}}}>
+            <h2 style={{{{ fontSize: "40px", fontWeight: 800, margin: 0, color: "#38bdf8" }}}}>Four Stages of Operation</h2>
+            <Timeline
+              layoutMode="landscape"
+              steps={{sections.map(s => ({{ title: s.heading, description: s.text.slice(0, 80) }}))}}
+            />
+          </div>
+        </Sequence>
+
+        <Sequence from={{secDuration * 3}} durationInFrames={{secDuration * 2}}>
+          <BulletReveal
+            layoutMode="landscape"
+            bullets={{sections.map(s => s.text.slice(0, 140))}}
+          />
+        </Sequence>
+
+        <CaptionOverlay text={{subtitle}} layoutMode="landscape" />
+      </SceneContainer>
     </div>
   );
 }};
 """
         OUTPUT_FILE.write_text(fallback_code, encoding="utf-8")
-        logger.info("✅ Written deterministic fallback scene to %s", OUTPUT_FILE)
+        logger.info("✅ Written deterministic fallback scene (%s layout) to %s", mode, OUTPUT_FILE)

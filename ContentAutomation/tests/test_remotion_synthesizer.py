@@ -55,3 +55,33 @@ def test_synthesizer_broken_code_triggers_repair_and_fallback():
         smoke_ok, smoke_err = synthesizer._smoke_test_render(OUTPUT_FILE)
         assert smoke_ok is True, f"Smoke test failed on fallback: {smoke_err}"
 
+
+def test_synthesizer_fallbacks_for_all_layout_modes():
+    from platform_profiles import get_profile
+
+    synthesizer = RemotionSynthesizer()
+    script = MockScript()
+
+    # 1. Test Portrait Fallback
+    shorts_prof = get_profile("shorts")
+    synthesizer._write_fallback("Jet Engines", script, 20.0, shorts_prof, shorts_prof.format)
+    code_portrait = OUTPUT_FILE.read_text(encoding="utf-8")
+    assert 'layoutMode="portrait"' in code_portrait
+    assert "SceneContainer" in code_portrait
+
+    # 2. Test Square Fallback
+    insta_prof = get_profile("instagram")
+    synthesizer._write_fallback("Jet Engines", script, 20.0, insta_prof, insta_prof.format)
+    code_square = OUTPUT_FILE.read_text(encoding="utf-8")
+    assert 'layoutMode="square"' in code_square
+    assert "SceneContainer" in code_square
+
+    # 3. Test Landscape Fallback
+    yt_prof = get_profile("youtube")
+    synthesizer._write_fallback("Jet Engines", script, 20.0, yt_prof, yt_prof.format)
+    code_landscape = OUTPUT_FILE.read_text(encoding="utf-8")
+    assert 'layoutMode="landscape"' in code_landscape
+    assert "SceneContainer" in code_landscape
+
+
+

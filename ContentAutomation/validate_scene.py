@@ -148,6 +148,20 @@ def validate_scene_code(code: str, file_path: Optional[Path] = None) -> list[Vio
                 snippet=line.strip(),
             ))
 
+    # 5. Check for hardcoded excessive pixel widths (>1100px)
+    excessive_width_pattern = re.compile(r"""(?:width|maxWidth)\s*:\s*['"]?([1-9]\d{3,})px?['"]?""")
+    for line_idx, line in enumerate(lines, start=1):
+        match = excessive_width_pattern.search(line)
+        if match:
+            w_val = int(match.group(1))
+            if w_val >= 1100:
+                violations.append(Violation(
+                    rule_id="no_hardcoded_wide_widths",
+                    line=line_idx,
+                    message=f"Hardcoded width of {w_val}px exceeds responsive safe bounds. Use '100%' or responsive layoutMode.",
+                    snippet=line.strip()[:100],
+                ))
+
     return violations
 
 

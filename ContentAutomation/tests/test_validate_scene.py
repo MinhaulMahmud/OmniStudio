@@ -108,6 +108,21 @@ def test_good_sample_1_primitives_composition():
     assert len(v) == 0, f"Expected 0 violations but got: {[str(x) for x in v]}"
 
 
+def test_bad_sample_7_excessive_width():
+    code = """
+    import React from "react";
+    import { useCurrentFrame, useVideoConfig, interpolate } from "remotion";
+    export const Scene = () => {
+        const frame = useCurrentFrame();
+        const { fps } = useVideoConfig();
+        const o = interpolate(frame, [0, 10], [0, 1]);
+        return <div style={{ width: "1600px", opacity: o }}>Wide Container</div>;
+    };
+    """
+    v = validate_scene_code(code)
+    assert any(violation.rule_id == "no_hardcoded_wide_widths" for violation in v)
+
+
 def test_good_sample_2_spring_bullets():
     code = """
     import React from "react";

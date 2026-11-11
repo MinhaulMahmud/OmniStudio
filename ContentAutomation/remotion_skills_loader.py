@@ -100,9 +100,31 @@ RULES_REGISTRY: list[dict] = [
         "source_file": "remotion-markup/multi-scene-video.md",
         "text": (
             "You MUST compose scenes primarily using the tested primitives from '../primitives/' "
-            "(TitleCard, BulletReveal, BarChart, LineChart, Timeline, DiagramNodes, Counter, CaptionOverlay). "
+            "(TitleCard, BulletReveal, BarChart, LineChart, Timeline, DiagramNodes, Counter, CaptionOverlay, SceneContainer). "
             "Custom SVG elements are allowed only for topic-specific diagrams (e.g. turbine blades, DNA helices), "
             "kept modular and isolated in their own components."
+        ),
+    },
+    {
+        "id": "rule_no_hardcoded_inline_widths",
+        "severity": "hard",
+        "tags": ["layout", "markup", "composition"],
+        "source_file": "remotion-create/video-layout.md",
+        "text": (
+            "NEVER set hardcoded wide pixel widths (e.g. width: '1600px' or width: '1200px') on content containers. "
+            "You MUST use responsive widths (width: '100%'), let primitives calculate their bounds, "
+            "and wrap the top-level scene inside <SceneContainer layoutMode={layoutMode} safeZone={safeZone}>."
+        ),
+    },
+    {
+        "id": "rule_portrait_vertical_stacking",
+        "severity": "hard",
+        "tags": ["layout", "markup", "portrait"],
+        "source_file": "remotion-create/video-layout.md",
+        "text": (
+            "When layoutMode is 'portrait' (e.g. 9:16 Shorts/Reels/TikTok), you MUST stack elements vertically "
+            "(flexDirection: 'column') with a single centered column. NEVER create side-by-side horizontal rows "
+            "wider than 900px in portrait mode."
         ),
     },
     # Soft Guidance Rules

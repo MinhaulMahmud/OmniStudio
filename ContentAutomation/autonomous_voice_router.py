@@ -210,16 +210,39 @@ class AutonomousVoiceRouter:
         est_duration = cls.estimate_duration_seconds(text)
         is_long_form = est_duration > LONG_FORM_THRESHOLD_SECONDS
 
-        # If user explicitly specified both model and voice, honor the explicit request
-        if requested_model and requested_voice:
+        # If user explicitly specified model, honor it
+        if requested_model and requested_model.lower() not in ["auto", ""]:
+            if requested_voice and requested_voice.lower() not in ["auto", ""]:
+                selected_voice = requested_voice
+            elif requested_model.lower() == "kittentts":
+                selected_voice = "expr-voice-2-m"
+            else:
+                selected_voice = "alloy"
             return RoutingDecision(
                 model=requested_model,
+                voice=selected_voice,
+                language_code=lang_info.code,
+                language_name=lang_info.name,
+                estimated_duration_seconds=est_duration,
+                is_long_form=is_long_form,
+                reason=f"User explicitly requested model='{requested_model}' with voice='{selected_voice}'.",
+            )
+
+        # If user explicitly specified voice (without model), resolve appropriate engine
+        if requested_voice and requested_voice.lower() not in ["auto", ""]:
+            if requested_voice.lower() in ["expr-voice-2-m", "expr-voice-1-m", "expr-voice-1-f", "expr-voice-2-f"] or "kitten" in requested_voice.lower():
+                selected_model = "kittentts"
+            else:
+                # Cloned voice (e.g. minhaz, e50a2165) or OmniVoice profile
+                selected_model = "omnivoice"
+            return RoutingDecision(
+                model=selected_model,
                 voice=requested_voice,
                 language_code=lang_info.code,
                 language_name=lang_info.name,
                 estimated_duration_seconds=est_duration,
                 is_long_form=is_long_form,
-                reason=f"User explicitly requested model='{requested_model}' and voice='{requested_voice}'.",
+                reason=f"User explicitly requested voice='{requested_voice}'. Routed to engine='{selected_model}'.",
             )
 
         # ─── Autonomous Decision Matrix ──────────────────────────────────────
@@ -228,8 +251,7 @@ class AutonomousVoiceRouter:
         # KittenTTS only supports English, so any other language MUST use OmniVoice.
         if not lang_info.is_english:
             selected_model = "omnivoice"
-            # In OmniVoice, base preset or profile supporting target language
-            selected_voice = requested_voice or "alloy"
+            selected_voice = "alloy"
             reason = (
                 f"🌍 Autonomous Decision: Language detected as '{lang_info.name}' ({lang_info.code}). "
                 f"KittenTTS only supports English. Routed to OmniVoice multilingual engine "
@@ -246,27 +268,8 @@ class AutonomousVoiceRouter:
             )
 
         # CASE 2: English Language — KittenTTS is the DEFAULT for ANY size audio
-        # User requirement: "default is kitten tts for any size audio but keep option to use other voice models"
-        if requested_voice and requested_voice.lower() in ["minhaz", "e50a2165", "onyx", "alloy"]:
-            selected_model = requested_model or "omnivoice"
-            selected_voice = requested_voice
-            reason = (
-                f"🎙️ User Selection: Explicit voice '{requested_voice}' requested. "
-                f"Routed to OmniVoice model with voice='{selected_voice}'."
-            )
-            return RoutingDecision(
-                model=selected_model,
-                voice=selected_voice,
-                language_code=lang_info.code,
-                language_name=lang_info.name,
-                estimated_duration_seconds=est_duration,
-                is_long_form=is_long_form,
-                reason=reason,
-            )
-
-        # Default for any size audio: KittenTTS
-        selected_model = requested_model or "kittentts"
-        selected_voice = requested_voice or "expr-voice-2-m"
+        selected_model = "kittentts"
+        selected_voice = "expr-voice-2-m"
         reason = (
             f"⚡ KittenTTS Explainer (Default): Script (~{est_duration:.1f}s) routed to KittenTTS "
             f"with voice='{selected_voice}' for fast, effective, and authentic explainer narration."

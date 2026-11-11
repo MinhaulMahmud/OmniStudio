@@ -37,6 +37,9 @@ from config import (
     LOG_LEVEL,
     LOG_FILE,
     VOICESTUDIO_BASE_URL,
+    DEFAULT_AUDIO_QUALITY,
+    DEFAULT_VOICE_REFINEMENT,
+    DEFAULT_EVEN_OUT_VOLUME,
 )
 from researcher import ContentResearcher, VideoIdea
 from script_generator import ScriptGenerator, VideoScript
@@ -93,7 +96,11 @@ class ContentAutomationPipeline:
         formats: Optional[list[str]] = None,
         voice_id: Optional[str] = None,
         voice_name: Optional[str] = None,
+        voice_model: Optional[str] = None,
         language: Optional[str] = None,
+        audio_quality: str = DEFAULT_AUDIO_QUALITY,
+        voice_refinement: int = DEFAULT_VOICE_REFINEMENT,
+        even_out_volume: bool = DEFAULT_EVEN_OUT_VOLUME,
         skip_research: bool = False,
         skip_video: bool = False,
         use_remotion: bool = True,
@@ -152,6 +159,10 @@ class ContentAutomationPipeline:
                 script=custom_script,
                 voice_id=voice_id,
                 voice_name=voice_name,
+                voice_model=voice_model,
+                audio_quality=audio_quality,
+                voice_refinement=voice_refinement,
+                even_out_volume=even_out_volume,
                 language=language,
                 formats=formats,
                 run_dir=run_dir,
@@ -171,6 +182,10 @@ class ContentAutomationPipeline:
                         formats=formats,
                         voice_id=voice_id,
                         voice_name=voice_name,
+                        voice_model=voice_model,
+                        audio_quality=audio_quality,
+                        voice_refinement=voice_refinement,
+                        even_out_volume=even_out_volume,
                         language=language,
                         run_dir=run_dir,
                         skip_research=skip_research,
@@ -201,6 +216,10 @@ class ContentAutomationPipeline:
         skip_video: bool,
         use_remotion: bool = True,
         language: Optional[str] = None,
+        voice_model: Optional[str] = None,
+        audio_quality: str = DEFAULT_AUDIO_QUALITY,
+        voice_refinement: int = DEFAULT_VOICE_REFINEMENT,
+        even_out_volume: bool = DEFAULT_EVEN_OUT_VOLUME,
         profile: Optional[PlatformProfile] = None,
         video_format: Optional[VideoFormat] = None,
         duration: Optional[int] = None,
@@ -271,6 +290,8 @@ class ContentAutomationPipeline:
 
         # ─── Step 3: Voice Synthesis ───────────────────────────────────────
         logger.info("\n🎙️  STEP 3: Synthesizing voice...")
+        logger.info("   Model: %s | Voice: %s | Quality: %s | Refinement: %d | Even Volume: %s",
+                    voice_model or "auto", voice_name or voice_id or "auto", audio_quality, voice_refinement, even_out_volume)
         narration_text = script.to_narration()
         audio_path = run_dir / f"audio_{self._safe_name(effective_topic)}.mp3"
 
@@ -281,7 +302,11 @@ class ContentAutomationPipeline:
                 output_path=audio_path,
                 voice_id=voice_id,
                 voice_name=voice_name,
+                model=voice_model,
                 language=language,
+                audio_quality=audio_quality,
+                voice_refinement=voice_refinement,
+                even_out_volume=even_out_volume,
             )
         except Exception as exc:
             logger.warning("synthesize_chunked failed (%s); falling back to direct synthesize...", exc)
@@ -290,7 +315,11 @@ class ContentAutomationPipeline:
                 output_path=audio_path,
                 voice_id=voice_id,
                 voice_name=voice_name,
+                model=voice_model,
                 language=language,
+                audio_quality=audio_quality,
+                voice_refinement=voice_refinement,
+                even_out_volume=even_out_volume,
             )
             segment_timings = []
 
@@ -337,11 +366,14 @@ class ContentAutomationPipeline:
                 logger.info("\n⚛️  STEP 5: Synthesizing & Rendering Remotion Visuals...")
                 remotion_path = run_dir / f"video_remotion_{self._safe_name(effective_topic)}.mp4"
 
-                voice_label = "KittenTTS Explainer"
                 if voice_name and voice_name.lower() in ["minhaz", "clone"]:
-                    voice_label = "Minhaz Voice"
+                    voice_label = "Minhaz Clone"
                 elif voice_name:
                     voice_label = f"{voice_name} Voice"
+                elif voice_model:
+                    voice_label = f"{voice_model.title()} Voice"
+                else:
+                    voice_label = "KittenTTS Explainer"
 
                 # Invoke RemotionSynthesizer for dynamic React/TSX scene synthesis
                 t_synth_start = time.time()
@@ -430,6 +462,10 @@ class ContentAutomationPipeline:
         skip_video: bool,
         use_remotion: bool = True,
         language: Optional[str] = None,
+        voice_model: Optional[str] = None,
+        audio_quality: str = DEFAULT_AUDIO_QUALITY,
+        voice_refinement: int = DEFAULT_VOICE_REFINEMENT,
+        even_out_volume: bool = DEFAULT_EVEN_OUT_VOLUME,
         profile: Optional[PlatformProfile] = None,
         video_format: Optional[VideoFormat] = None,
     ) -> dict:
@@ -445,6 +481,10 @@ class ContentAutomationPipeline:
             skip_video=skip_video,
             use_remotion=use_remotion,
             language=language,
+            voice_model=voice_model,
+            audio_quality=audio_quality,
+            voice_refinement=voice_refinement,
+            even_out_volume=even_out_volume,
             profile=profile,
             video_format=video_format,
             custom_script=script,
@@ -580,8 +620,19 @@ Examples:
                         help="Load a pre-generated script JSON file")
 
     # Voice & Language options
+    parser.add_argument("--voice-model", default=None,
+                        help="TTS engine/model to use (e.g. kittentts, omnivoice). Default: auto-routed.")
     parser.add_argument("--voice-id", help="VoiceStudio voice ID to use")
-    parser.add_argument("--voice-name", help="VoiceStudio voice name to use")
+    parser.add_argument("--voice-name", "--voice", help="VoiceStudio voice name to use (e.g. 'expr-voice-2-m', 'minhaz', 'Alloy')")
+    parser.add_argument("--audio-quality", default=DEFAULT_AUDIO_QUALITY,
+                        choices=["standard", "editing", "original"],
+                        help="Audio quality / bit depth: 'standard' (16-bit PCM), 'editing' (24-bit PCM), 'original' (32-bit float). Default: standard.")
+    parser.add_argument("--voice-refinement", "--refinement", type=int, default=DEFAULT_VOICE_REFINEMENT,
+                        help="Voice refinement iterations/passes (1-50, default: 19). Fewer passes lower quality; more take longer.")
+    parser.add_argument("--even-out-volume", dest="even_out_volume", action="store_true", default=DEFAULT_EVEN_OUT_VOLUME,
+                        help="Balance and normalize audio loudness across chunks (default: True)")
+    parser.add_argument("--no-even-out-volume", dest="even_out_volume", action="store_false",
+                        help="Disable audio volume leveling/normalization")
     parser.add_argument("--language", "--lang", default="auto",
                         help="Language code or name (e.g. en, es, fr, bn, hi, auto). Detected automatically by default.")
     parser.add_argument("--list-voices", action="store_true",
@@ -704,6 +755,10 @@ Examples:
         formats=active_formats,
         voice_id=args.voice_id,
         voice_name=args.voice_name,
+        voice_model=args.voice_model,
+        audio_quality=args.audio_quality,
+        voice_refinement=args.voice_refinement,
+        even_out_volume=args.even_out_volume,
         language=args.language,
         skip_research=args.no_research,
         skip_video=args.no_video,

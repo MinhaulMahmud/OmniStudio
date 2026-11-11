@@ -32,6 +32,9 @@ try:
         TTS_SPEED,
         OUTPUT_DIR,
         FFMPEG_PATH,
+        DEFAULT_AUDIO_QUALITY,
+        DEFAULT_VOICE_REFINEMENT,
+        DEFAULT_EVEN_OUT_VOLUME,
     )
 except ImportError:
     from ContentAutomation.autonomous_voice_router import AutonomousVoiceRouter, RoutingDecision
@@ -43,6 +46,9 @@ except ImportError:
         TTS_SPEED,
         OUTPUT_DIR,
         FFMPEG_PATH,
+        DEFAULT_AUDIO_QUALITY,
+        DEFAULT_VOICE_REFINEMENT,
+        DEFAULT_EVEN_OUT_VOLUME,
     )
 
 logger = logging.getLogger(__name__)
@@ -294,6 +300,9 @@ class VoiceStudioClient:
         language: Optional[str] = None,
         audio_format: str = "wav",
         speed: float = TTS_SPEED,
+        audio_quality: str = DEFAULT_AUDIO_QUALITY,
+        voice_refinement: int = DEFAULT_VOICE_REFINEMENT,
+        even_out_volume: bool = DEFAULT_EVEN_OUT_VOLUME,
         max_retries: int = 3,
     ) -> Optional[Path]:
         """
@@ -315,14 +324,21 @@ class VoiceStudioClient:
             "voice": vid,
             "response_format": audio_format,
             "speed": speed,
+            "audio_quality": audio_quality,
+            "quality": audio_quality,
+            "refinement": voice_refinement,
+            "voice_refinement": voice_refinement,
+            "passes": voice_refinement,
+            "even_out_volume": even_out_volume,
+            "normalize": even_out_volume,
         }
         if language and language.lower() not in ["auto", "und"]:
             payload["language"] = language
 
         for attempt in range(1, max_retries + 1):
             try:
-                logger.info("Synthesizing chunk (%d chars) [model=%s, voice=%s, lang=%s, attempt %d/%d]...",
-                            len(text), model, vid, language or "auto", attempt, max_retries)
+                logger.info("Synthesizing chunk (%d chars) [model=%s, voice=%s, lang=%s, quality=%s, refinement=%d, even_volume=%s, attempt %d/%d]...",
+                            len(text), model, vid, language or "auto", audio_quality, voice_refinement, even_out_volume, attempt, max_retries)
                 resp = self.session.post(
                     f"{self.base_url}/v1/audio/speech",
                     json=payload,
@@ -374,6 +390,9 @@ class VoiceStudioClient:
         audio_format: str = TTS_FORMAT,
         speed: float = TTS_SPEED,
         pause_seconds: float = 0.25,
+        audio_quality: str = DEFAULT_AUDIO_QUALITY,
+        voice_refinement: int = DEFAULT_VOICE_REFINEMENT,
+        even_out_volume: bool = DEFAULT_EVEN_OUT_VOLUME,
     ) -> tuple[Optional[Path], list[dict]]:
         """
         Synthesize text in short 3-4 sentence chunks, verify each chunk,
@@ -406,7 +425,8 @@ class VoiceStudioClient:
         temp_dir = output_path.parent / f"chunks_{output_path.stem}"
         temp_dir.mkdir(parents=True, exist_ok=True)
 
-        logger.info("Beginning chunked synthesis of %d chunks with VoiceStudio (%s / %s)...", len(chunks), model, voice_id)
+        logger.info("Beginning chunked synthesis of %d chunks with VoiceStudio (%s / %s, quality=%s, refinement=%d, even_volume=%s)...",
+                    len(chunks), model, voice_id, audio_quality, voice_refinement, even_out_volume)
 
         # Generate silence wav file for inter-chunk pauses if requested
         silence_wav = temp_dir / "pause.wav"
@@ -431,6 +451,9 @@ class VoiceStudioClient:
                 language=language,
                 audio_format="wav",
                 speed=speed,
+                audio_quality=audio_quality,
+                voice_refinement=voice_refinement,
+                even_out_volume=even_out_volume,
             )
             if not saved:
                 raise RuntimeError(f"Failed to generate chunk {idx}: {chunk_text[:50]}")
@@ -448,7 +471,8 @@ class VoiceStudioClient:
             accumulated_time += duration + pause_seconds
 
         # Stitch all chunks seamlessly with FFmpeg
-        logger.info("Concatenating %d chunks into %s...", len(chunk_files), output_path.name)
+        logger.info("Concatenating %d chunks into %s (quality: %s, even_volume: %s)...",
+                    len(chunk_files), output_path.name, audio_quality, even_out_volume)
         ffmpeg_inputs: list[str] = []
         filter_converts: list[str] = []
         concat_inputs: list[str] = []
@@ -465,8 +489,23 @@ class VoiceStudioClient:
                 concat_inputs.append(f"[a{input_count}]")
                 input_count += 1
 
-        filter_str = "".join(filter_converts) + "".join(concat_inputs) + f"concat=n={input_count}:v=0:a=1[outa]"
-        codec_args = ["-c:a", "libmp3lame", "-b:a", "192k"] if audio_format == "mp3" else ["-c:a", "pcm_s16le"]
+        if even_out_volume:
+            # Level and normalize volume balance across chunks
+            filter_str = "".join(filter_converts) + "".join(concat_inputs) + f"concat=n={input_count}:v=0:a=1[cat];[cat]loudnorm=I=-16:TP=-1.5:LRA=11[outa]"
+        else:
+            filter_str = "".join(filter_converts) + "".join(concat_inputs) + f"concat=n={input_count}:v=0:a=1[outa]"
+
+        # Determine audio codec & bit depth based on audio_quality
+        quality_lower = (audio_quality or "standard").lower()
+        if audio_format == "mp3":
+            bitrate = "320k" if quality_lower in ("editing", "original", "24-bit", "32-bit") else "192k"
+            codec_args = ["-c:a", "libmp3lame", "-b:a", bitrate]
+        elif quality_lower in ("editing", "24-bit", "24bit", "for editing"):
+            codec_args = ["-c:a", "pcm_s24le"]
+        elif quality_lower in ("original", "32-bit", "32bit", "float"):
+            codec_args = ["-c:a", "pcm_f32le"]
+        else:  # standard (16-bit PCM)
+            codec_args = ["-c:a", "pcm_s16le"]
 
         cmd = [FFMPEG_PATH, "-y"] + ffmpeg_inputs + ["-filter_complex", filter_str, "-map", "[outa]"] + codec_args + [str(output_path)]
         res = subprocess.run(cmd, capture_output=True, text=True)
@@ -490,6 +529,9 @@ class VoiceStudioClient:
         audio_format: str = TTS_FORMAT,
         speed: float = TTS_SPEED,
         force_single: bool = False,
+        audio_quality: str = DEFAULT_AUDIO_QUALITY,
+        voice_refinement: int = DEFAULT_VOICE_REFINEMENT,
+        even_out_volume: bool = DEFAULT_EVEN_OUT_VOLUME,
     ) -> Optional[Path]:
         """
         Convert text to speech using autonomous voice routing and save to output_path.
@@ -506,6 +548,9 @@ class VoiceStudioClient:
                 language=language,
                 audio_format=audio_format,
                 speed=speed,
+                audio_quality=audio_quality,
+                voice_refinement=voice_refinement,
+                even_out_volume=even_out_volume,
             )
             return path
 
@@ -518,6 +563,9 @@ class VoiceStudioClient:
             language=language,
             audio_format=audio_format,
             speed=speed,
+            audio_quality=audio_quality,
+            voice_refinement=voice_refinement,
+            even_out_volume=even_out_volume,
         )
 
     def synthesize_segments(

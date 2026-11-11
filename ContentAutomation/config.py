@@ -50,6 +50,14 @@ LONG_FORM_THRESHOLD_SECONDS = float(os.getenv("LONG_FORM_THRESHOLD_SECONDS", "12
 TTS_FORMAT = "mp3"
 TTS_SPEED = 1.0   # 0.25 – 4.0
 
+# Advanced VoiceStudio Audio Settings
+# Audio Quality: "standard" (16-bit PCM), "editing" (24-bit PCM), "original" (32-bit float)
+DEFAULT_AUDIO_QUALITY = os.getenv("TTS_AUDIO_QUALITY", "standard")
+# Voice Refinement: integer passes (default 19; fewer passes lower quality, more take longer)
+DEFAULT_VOICE_REFINEMENT = int(os.getenv("TTS_VOICE_REFINEMENT", "19"))
+# Even Out Volume: balance loudness and consistency across audio chunks (default True)
+DEFAULT_EVEN_OUT_VOLUME = os.getenv("TTS_EVEN_OUT_VOLUME", "true").lower() in ("true", "1", "yes")
+
 # ─── AI / LLM Configuration ───────────────────────────────────────────────────
 # Backends: "omniroute" | "openrouter" | "ollama" | "openai" | "gemini"
 LLM_BACKEND = os.getenv("LLM_BACKEND", "omniroute")

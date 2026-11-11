@@ -337,6 +337,9 @@ const SectionSlide: React.FC<SectionSlideProps> = ({
 // ─── Component: Fallback Hero Motion ────────────────────────────────────────
 
 const HeroSlide: React.FC<{ title: string; subtitle: string }> = ({ title, subtitle }) => {
+  const { width, height } = useVideoConfig();
+  const isPortrait = height > width;
+
   return (
     <div
       style={{
@@ -347,14 +350,21 @@ const HeroSlide: React.FC<{ title: string; subtitle: string }> = ({ title, subti
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        padding: "80px",
+        padding: isPortrait ? "130px 40px 240px 40px" : "80px 60px",
         gap: "24px",
       }}
     >
-      <KineticText phrase={title} fontSize={64} alignment="center" accentColor="#00e5ff" />
-      <p style={{ fontSize: "28px", color: "#94a3b8", textAlign: "center", maxWidth: "900px" }}>
-        {subtitle}
-      </p>
+      <KineticText phrase={title} fontSize={isPortrait ? 44 : 56} alignment="center" accentColor="#00e5ff" />
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
+        <VisualMechanismViewport
+          topic={title}
+          sectionIndex={0}
+          totalSections={1}
+          heading={subtitle || title}
+          width={isPortrait ? 960 : 1140}
+          height={isPortrait ? 660 : 560}
+        />
+      </div>
     </div>
   );
 };

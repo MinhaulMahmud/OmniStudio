@@ -4,6 +4,7 @@ import { EngineCrossSection } from "./EngineCrossSection";
 import { SequentialGearboxMechanism } from "./SequentialGearboxMechanism";
 import { GearWheel } from "./GearWheel";
 import { MapViewport } from "../scenes/primitives/MapViewport";
+import { TurbofanJetMechanism } from "./TurbofanJetMechanism";
 
 export interface VisualMechanismViewportProps {
   topic: string;
@@ -25,9 +26,25 @@ export const VisualMechanismViewport: React.FC<VisualMechanismViewportProps> = (
   const frame = useCurrentFrame();
   const lowerTopic = (topic + " " + heading).toLowerCase();
 
+  const isPropulsion =
+    lowerTopic.includes("propulsion") ||
+    lowerTopic.includes("jet") ||
+    lowerTopic.includes("rocket") ||
+    lowerTopic.includes("thrust") ||
+    lowerTopic.includes("turbine") ||
+    lowerTopic.includes("aerospace") ||
+    lowerTopic.includes("flight") ||
+    lowerTopic.includes("aircraft") ||
+    lowerTopic.includes("aviation");
+
   const isMechanical =
     lowerTopic.includes("gear") ||
     lowerTopic.includes("engine") ||
+    lowerTopic.includes("motor") ||
+    lowerTopic.includes("transmission") ||
+    lowerTopic.includes("bike") ||
+    lowerTopic.includes("car") ||
+    lowerTopic.includes("mechanical");
     lowerTopic.includes("motor") ||
     lowerTopic.includes("transmission") ||
     lowerTopic.includes("bike") ||
@@ -132,6 +149,18 @@ export const VisualMechanismViewport: React.FC<VisualMechanismViewportProps> = (
         </div>
       );
     }
+  }
+
+  // ─── 0.5. JET & ROCKET PROPULSION MECHANISM ─────────────────────────────
+  if (isPropulsion) {
+    return (
+      <TurbofanJetMechanism
+        width={width}
+        height={height}
+        stage={sectionIndex}
+        rpm={3400 + sectionIndex * 350}
+      />
+    );
   }
 
   // ─── 1. MECHANICAL & TRANSMISSION ANIMATIONS ─────────────────────────────
@@ -375,44 +404,112 @@ export const VisualMechanismViewport: React.FC<VisualMechanismViewportProps> = (
     }
   }
 
-  // ─── 3. DEFAULT SYSTEM ARCHITECTURE VISUALIZER ───────────────────────────
+  // ─── 3. DYNAMIC KINETIC ARCHITECTURE & TELEMETRY CORE (DEFAULT) ──────────
+  const rot = (frame * 1.5) % 360;
+  const pulseR = interpolate(Math.sin(frame / 4), [-1, 1], [40, 55]);
+
   return (
     <div
       style={{
         width: `${width}px`,
         height: `${height}px`,
-        backgroundColor: "#070b14",
+        backgroundColor: "#050713",
         borderRadius: "20px",
-        border: "1px solid rgba(56, 189, 248, 0.3)",
+        border: "1px solid rgba(0, 229, 255, 0.35)",
         overflow: "hidden",
         position: "relative",
+        boxShadow: "0 15px 35px rgba(0,0,0,0.7), 0 0 25px rgba(0, 229, 255, 0.15)",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <div
         style={{
-          padding: "10px 16px",
-          backgroundColor: "rgba(15, 23, 42, 0.8)",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
-          fontSize: "12px",
-          fontWeight: 700,
-          color: "#38bdf8",
+          padding: "10px 18px",
+          backgroundColor: "rgba(10, 18, 36, 0.85)",
+          borderBottom: "1px solid rgba(0, 229, 255, 0.2)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          fontSize: "11px",
+          fontWeight: 800,
           letterSpacing: "1px",
+          color: "#00e5ff",
+          textTransform: "uppercase",
         }}
       >
-        TECHNICAL ARCHITECTURE & MECHANISM WORKFLOW
+        <span>SYSTEM ARCHITECTURE & TELEMETRY STREAM</span>
+        <div style={{ display: "flex", gap: "14px", color: "rgba(255,255,255,0.7)" }}>
+          <span>RATE: <strong style={{ color: "#38bdf8" }}>96.8%</strong></span>
+          <span>LATENCY: <strong style={{ color: "#a855f7" }}>1.2 ms</strong></span>
+          <span>ACTIVE: <strong style={{ color: "#22c55e" }}>ONLINE</strong></span>
+        </div>
       </div>
-      <svg viewBox="0 0 680 440" style={{ width: "100%", height: "calc(100% - 35px)" }}>
-        {/* Animated Signal Flow Lines */}
-        <line x1={100} y1={220} x2={580} y2={220} stroke="#38bdf8" strokeWidth="3" strokeDasharray="8 6" strokeDashoffset={-frame * 3} />
-        {/* Interactive Processing Blocks */}
-        <rect x={80} y={160} width={140} height={120} rx={16} fill="#0f172a" stroke="#38bdf8" strokeWidth="2" />
-        <text x={150} y={225} textAnchor="middle" fill="#ffffff" fontWeight="700">INPUT STAGE</text>
 
-        <rect x={270} y={140} width={140} height={160} rx={16} fill="#1e1b4b" stroke="#818cf8" strokeWidth="2.5" />
-        <text x={340} y={225} textAnchor="middle" fill="#ffffff" fontWeight="800">PROCESSING</text>
+      <svg viewBox="0 0 720 440" style={{ width: "100%", height: "calc(100% - 38px)", flex: 1 }}>
+        <defs>
+          <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#00e5ff" stopOpacity="0.8" />
+            <stop offset="40%" stopColor="#818cf8" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#050713" stopOpacity="0" />
+          </radialGradient>
+          <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#00e5ff" />
+            <stop offset="50%" stopColor="#818cf8" />
+            <stop offset="100%" stopColor="#ec4899" />
+          </linearGradient>
+        </defs>
 
-        <rect x={460} y={160} width={140} height={120} rx={16} fill="#0f172a" stroke="#38bdf8" strokeWidth="2" />
-        <text x={530} y={225} textAnchor="middle" fill="#ffffff" fontWeight="700">OUTPUT STAGE</text>
+        {/* Outer Circular Gimbal Rings */}
+        <g transform="translate(360, 220)">
+          <circle r="160" fill="none" stroke="rgba(0, 229, 255, 0.15)" strokeWidth="1.5" strokeDasharray="12 8" />
+          <circle r="130" fill="none" stroke="rgba(129, 140, 248, 0.25)" strokeWidth="2" strokeDasharray="24 16" transform={`rotate(${rot})`} />
+          <circle r="100" fill="none" stroke="rgba(0, 229, 255, 0.4)" strokeWidth="1" strokeDasharray="6 6" transform={`rotate(${-rot * 1.5})`} />
+
+          {/* Glowing Central Processing Core */}
+          <circle r={pulseR} fill="url(#coreGlow)" />
+          <circle r="22" fill="#0f172a" stroke="#00e5ff" strokeWidth="2.5" />
+          <circle r="8" fill="#38bdf8" />
+        </g>
+
+        {/* Left Input Stage Node */}
+        <g transform="translate(110, 220)">
+          <rect x="-60" y="-50" width="120" height="100" rx="14" fill="#0b1329" stroke="#38bdf8" strokeWidth="2" />
+          <text x="0" y="-15" textAnchor="middle" fill="#38bdf8" fontSize="12" fontWeight="800">INPUT DATA</text>
+          <text x="0" y="10" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="700">INGESTION</text>
+          <circle cx="0" cy="30" r="4" fill="#22c55e" />
+        </g>
+
+        {/* Right Output Stage Node */}
+        <g transform="translate(610, 220)">
+          <rect x="-60" y="-50" width="120" height="100" rx="14" fill="#0b1329" stroke="#ec4899" strokeWidth="2" />
+          <text x="0" y="-15" textAnchor="middle" fill="#ec4899" fontSize="12" fontWeight="800">EXECUTION</text>
+          <text x="0" y="10" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="700">OUTPUT</text>
+          <circle cx="0" cy="30" r="4" fill="#00e5ff" />
+        </g>
+
+        {/* Connecting Data Bus & Flowing Packets */}
+        <line x1="170" y1="220" x2="260" y2="220" stroke="#38bdf8" strokeWidth="3" strokeDasharray="8 6" strokeDashoffset={-frame * 3} />
+        <line x1="460" y1="220" x2="550" y2="220" stroke="#ec4899" strokeWidth="3" strokeDasharray="8 6" strokeDashoffset={-frame * 3} />
+
+        {/* Animated Sine Wave Spectrum across the bottom */}
+        {(() => {
+          const points = [];
+          for (let x = 60; x <= 660; x += 15) {
+            const y = 370 + Math.sin((x / 40) + frame / 5) * 16 + Math.cos((x / 20) - frame / 8) * 8;
+            points.push(`${x},${y.toFixed(1)}`);
+          }
+          return (
+            <polyline
+              points={points.join(" ")}
+              fill="none"
+              stroke="url(#waveGrad)"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              opacity="0.85"
+            />
+          );
+        })()}
       </svg>
     </div>
   );

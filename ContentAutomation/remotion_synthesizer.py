@@ -43,90 +43,104 @@ PLAYWRIGHT_NODE_DIR = r"C:\Users\MSI\AppData\Roaming\Python\Python313\site-packa
 
 
 PRIMITIVES_API_REFERENCE = """
-### AVAILABLE TESTED PRIMITIVES (Import from '../primitives/'):
-1. <SceneContainer layoutMode={"landscape"|"portrait"|"square"} safeZone={{top, bottom, left, right}}>
-   - Top-level root layout wrapper enforcing responsive container bounds and device safe zones.
-2. <TitleCard title={string} subtitle?: string badge?: string accentColor?: string layoutMode?: string />
-   - Main title card with spring-animated scaling and safe typography scaling.
-3. <BulletReveal bullets={string[]} accentColor?: string delayFrames?: number staggerFrames?: number maxWidth?: number|string layoutMode?: string />
-   - Numbered bullet points revealed sequentially with responsive card widths.
-4. <BarChart items={Array<{ label: string, value: number, formattedValue?: string, color?: string }>} title?: string maxValue?: number layoutMode?: string />
-   - Animated horizontal data bars growing smoothly.
-5. <LineChart points={Array<{ x: string|number, y: number }>} title?: string lineColor?: string layoutMode?: string />
-   - SVG line chart with animated stroke and shaded gradient.
-6. <Timeline steps={Array<{ title: string, description?: string }>} activeStep?: number accentColor?: string layoutMode?: string />
-   - Sequential process nodes (horizontal on landscape; vertical stepper on portrait).
-7. <DiagramNodes nodes={Array<{ id: string, label: string, sub?: string, x: number, y: number }>} edges={Array<{ from: string, to: string }>} title?: string layoutMode?: string />
-   - Network / system block diagram with animated signal pulses.
-8. <Counter toValue={number} label={string} fromValue?: number unit?: string prefix?: string layoutMode?: string />
-   - High-impact animated metric counter.
-9. <CaptionOverlay text={string} layoutMode?: string />
-   - Spoken narration caption bar (automatically elevated to clear TikTok/Shorts overlays).
+### AVAILABLE HIGH-IMPACT MOTION GRAPHICS PRIMITIVES (Import from '../primitives/'):
+1. <DynamicBackdrop theme={"aurora"|"nebula"|"cyber"|"minimal"} particleCount?: number showGrid?: boolean />
+   - Rich multi-layer animated canvas backdrop with floating particles, luminous nebula gradients, and perspective grid.
+2. <CinematicCamera drift?: "zoom-in"|"zoom-out"|"drift-left"|"drift-right"|"handheld" intensity?: number>
+   - Subtle 3D-camera motion wrapper providing organic cinematic float and smooth scale progression.
+3. <KineticText phrase={string} accentWords?: string[] fontSize?: number alignment?: "left"|"center" accentColor?: string />
+   - Punchy kinetic typography with word-by-word spring pop-in and glowing accent word highlights.
+4. <HUDTelemetry label?: string value?: string|number size?: number color?: string />
+   - Real-time sci-fi HUD telemetry gauge with concentric rotating gimbal rings and technical readouts.
+5. <EnergyPulse size?: number color?: string strokeWidth?: number durationFrames?: number />
+   - Expanding glowing energy wave shockwave for emphasis and transitions.
+6. <DiagramNodes nodes={Array<{ id: string, label: string, sub?: string, x: number, y: number }>} edges={Array<{ from: string, to: string }>} title?: string layoutMode?: string />
+   - Animated network / system block diagram with glowing nodes and traveling signal pulses.
+7. <BarChart items={Array<{ label: string, value: number, formattedValue?: string, color?: string }>} title?: string maxValue?: number layoutMode?: string />
+   - Animated data comparison bars growing smoothly.
+8. <LineChart points={Array<{ x: string|number, y: number }>} title?: string lineColor?: string layoutMode?: string />
+   - Precision vector line chart with animated stroke and shaded gradient.
+9. <MapViewport width={number} height={number} projectionType?: string center?: [number, number] zoom?: number highlightCountries?: Array<{ id: string, label?: string, appearAtFrame?: number }> pins?: Array<{ lngLat: [number, number], label?: string, appearAtFrame?: number }> arcs?: Array<{ from: [number, number], to: [number, number], label?: string, appearAtFrame?: number }> />
+   - Vector D3 Geo + TopoJSON map with flight arcs, pulsing pins, and territory illumination.
+10. <Counter toValue={number} label={string} fromValue?: number unit?: string prefix?: string layoutMode?: string />
+    - High-impact animated metric counter.
+11. <CaptionOverlay text={string} layoutMode?: string />
+    - Spoken narration caption bar (elevated to clear TikTok/Shorts overlays).
 """
 
 FEW_SHOT_EXAMPLE_1 = """
-// Example 1: Landscape 16:9 Technical Explainer
+// Example 1: Landscape 16:9 Technical Explainer with Motion Graphics
 import React from "react";
 import { Sequence, useCurrentFrame, useVideoConfig } from "remotion";
-import { SceneContainer, TitleCard, BulletReveal, Timeline, CaptionOverlay } from "../primitives";
+import { SceneContainer, DynamicBackdrop, CinematicCamera, KineticText, HUDTelemetry, DiagramNodes, CaptionOverlay } from "../primitives";
 
 export const DynamicTopicScene: React.FC<any> = ({
   title = "Jet Engine Thrust Cycle",
-  subtitle = "Brayton Thermodynamic Cycle",
+  subtitle = "Thermodynamic Propulsion Kinematics",
 }) => {
-  const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
   const sec1Dur = Math.round(5 * fps);
-  const sec2Dur = Math.round(8 * fps);
+  const sec2Dur = Math.round(10 * fps);
   const sec3Dur = Math.round(10 * fps);
 
   return (
-    <SceneContainer layoutMode="landscape" safeZone={{ top: 80, bottom: 80, left: 100, right: 100 }}>
-      {/* Sequence 1: Hook & Title */}
-      <Sequence from={0} durationInFrames={sec1Dur}>
-        <TitleCard title={title} subtitle={subtitle} badge="PROPULSION KINEMATICS" layoutMode="landscape" />
-      </Sequence>
+    <div style={{ width: "100%", height: "100%", position: "relative", backgroundColor: "#050711", overflow: "hidden" }}>
+      <DynamicBackdrop theme="aurora" particleCount={36} showGrid={true} />
 
-      {/* Sequence 2: 4-Stage Process Timeline */}
-      <Sequence from={sec1Dur} durationInFrames={sec2Dur}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px", width: "100%" }}>
-          <h2 style={{ fontSize: "40px", fontWeight: 800, margin: 0, color: "#38bdf8" }}>Four Stages of Jet Thrust</h2>
-          <Timeline
-            layoutMode="landscape"
-            steps={[
-              { title: "Intake", description: "Huge fan scoops air" },
-              { title: "Compress", description: "Blades squeeze air 40:1" },
-              { title: "Combust", description: "Fuel ignites at 1700C" },
-              { title: "Exhaust", description: "High velocity nozzle thrust" },
-            ]}
-          />
-        </div>
-      </Sequence>
+      <SceneContainer layoutMode="landscape" safeZone={{ top: 80, bottom: 80, left: 100, right: 100 }}>
+        <CinematicCamera drift="zoom-in" intensity={0.04}>
+          {/* Sequence 1: Hero Kinetic Hook & HUD Telemetry */}
+          <Sequence from={0} durationInFrames={sec1Dur}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", height: "100%" }}>
+              <div style={{ maxWidth: "600px" }}>
+                <KineticText phrase={title} accentWords={["Engine", "Thrust"]} fontSize={56} accentColor="#00e5ff" />
+              </div>
+              <HUDTelemetry label="THRUST VECTOR" value="78,500 LBF" size={320} color="#00e5ff" />
+            </div>
+          </Sequence>
 
-      {/* Sequence 3: Key Takeaways */}
-      <Sequence from={sec1Dur + sec2Dur} durationInFrames={sec3Dur}>
-        <BulletReveal
-          layoutMode="landscape"
-          bullets={[
-            "Compressor raises air pressure exponentially before ignition.",
-            "Turbine extracts energy from expanding gas to power the front fan.",
-            "Newton's 3rd law generates massive forward momentum."
-          ]}
-        />
-      </Sequence>
+          {/* Sequence 2: 4-Stage Mechanical Workflow Architecture */}
+          <Sequence from={sec1Dur} durationInFrames={sec2Dur}>
+            <DiagramNodes
+              title="Continuous Brayton Combustion Cycle"
+              layoutMode="landscape"
+              nodes={[
+                { id: "1", label: "Intake Fan", sub: "1,200 kg/s mass", x: 60, y: 150 },
+                { id: "2", label: "Compressor", sub: "42:1 pressure", x: 280, y: 150 },
+                { id: "3", label: "Combustor", sub: "1,750°C ignition", x: 500, y: 150 },
+                { id: "4", label: "Nozzle", sub: "Mach 2.2 exhaust", x: 720, y: 150 },
+              ]}
+              edges={[
+                { from: "1", to: "2" },
+                { from: "2", to: "3" },
+                { from: "3", to: "4" },
+              ]}
+            />
+          </Sequence>
 
-      <CaptionOverlay text={subtitle} layoutMode="landscape" />
-    </SceneContainer>
+          {/* Sequence 3: Telemetry Analysis */}
+          <Sequence from={sec1Dur + sec2Dur} durationInFrames={sec3Dur}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around", width: "100%", height: "100%" }}>
+              <HUDTelemetry label="TURBINE INLET" value="1,750 °C" size={260} color="#f97316" />
+              <HUDTelemetry label="PRESSURE RATIO" value="42 : 1" size={260} color="#38bdf8" />
+              <HUDTelemetry label="NET EXPULSION" value="Mach 2.4" size={260} color="#22c55e" />
+            </div>
+          </Sequence>
+        </CinematicCamera>
+
+        <CaptionOverlay text={subtitle} layoutMode="landscape" />
+      </SceneContainer>
+    </div>
   );
 };
 """
 
 FEW_SHOT_EXAMPLE_2 = """
-// Example 2: Portrait 9:16 Mobile Short / Reel / TikTok
+// Example 2: Portrait 9:16 Mobile Short / Reel / TikTok with Motion Graphics
 import React from "react";
 import { Sequence, useCurrentFrame, useVideoConfig } from "remotion";
-import { SceneContainer, TitleCard, Timeline, BulletReveal, CaptionOverlay } from "../primitives";
+import { SceneContainer, DynamicBackdrop, CinematicCamera, KineticText, HUDTelemetry, DiagramNodes, CaptionOverlay } from "../primitives";
 
 export const DynamicTopicScene: React.FC<any> = ({
   title = "How Neural Nets Learn",
@@ -134,48 +148,53 @@ export const DynamicTopicScene: React.FC<any> = ({
 }) => {
   const { fps } = useVideoConfig();
 
-  const sec1Dur = Math.round(4 * fps);
+  const sec1Dur = Math.round(5 * fps);
   const sec2Dur = Math.round(10 * fps);
   const sec3Dur = Math.round(10 * fps);
 
   return (
-    <SceneContainer layoutMode="portrait" safeZone={{ top: 140, bottom: 320, left: 80, right: 140 }}>
-      {/* Sequence 1: Hook Headline at Top Safe Zone */}
-      <Sequence from={0} durationInFrames={sec1Dur}>
-        <TitleCard title={title} subtitle={subtitle} badge="AI EXPLAINED" layoutMode="portrait" />
-      </Sequence>
+    <div style={{ width: "100%", height: "100%", position: "relative", backgroundColor: "#050711", overflow: "hidden" }}>
+      <DynamicBackdrop theme="cyber" particleCount={24} showGrid={true} />
 
-      {/* Sequence 2: Vertical Stepper in Center */}
-      <Sequence from={sec1Dur} durationInFrames={sec2Dur}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px", width: "100%" }}>
-          <h2 style={{ fontSize: "36px", fontWeight: 800, margin: 0, color: "#38bdf8", textAlign: "center" }}>
-            The 3-Step Feedback Loop
-          </h2>
-          <Timeline
-            layoutMode="portrait"
-            steps={[
-              { title: "Forward Pass", description: "Compute initial prediction" },
-              { title: "Calculate Loss", description: "Measure distance from target" },
-              { title: "Backpropagation", description: "Update weights via gradient descent" },
-            ]}
-          />
-        </div>
-      </Sequence>
+      <SceneContainer layoutMode="portrait" safeZone={{ top: 140, bottom: 320, left: 80, right: 140 }}>
+        <CinematicCamera drift="zoom-in" intensity={0.05}>
+          {/* Sequence 1: Kinetic Hero Title */}
+          <Sequence from={0} durationInFrames={sec1Dur}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "24px", paddingTop: "80px" }}>
+              <KineticText phrase={title} accentWords={["Neural", "Learn"]} fontSize={46} alignment="center" accentColor="#00e5ff" />
+              <HUDTelemetry label="ACTIVE WEIGHTS" value="70 BILLION" size={260} color="#818cf8" />
+            </div>
+          </Sequence>
 
-      {/* Sequence 3: Key Bullets Above Bottom Safe Zone */}
-      <Sequence from={sec1Dur + sec2Dur} durationInFrames={sec3Dur}>
-        <BulletReveal
-          layoutMode="portrait"
-          bullets={[
-            "Weights start as random Gaussian noise.",
-            "Gradients point toward lowest loss.",
-            "Billions of parameters converge simultaneously."
-          ]}
-        />
-      </Sequence>
+          {/* Sequence 2: Vertical Synaptic Flow */}
+          <Sequence from={sec1Dur} durationInFrames={sec2Dur}>
+            <DiagramNodes
+              title="Gradient Descent Convergence"
+              layoutMode="portrait"
+              nodes={[
+                { id: "in", label: "Inputs [X]", sub: "Raw Vector", x: 180, y: 40 },
+                { id: "hid", label: "Weights [W]", sub: "Matrix Mult", x: 180, y: 160 },
+                { id: "out", label: "Loss [L]", sub: "Objective", x: 180, y: 280 },
+              ]}
+              edges={[
+                { from: "in", to: "hid" },
+                { from: "hid", to: "out" },
+              ]}
+            />
+          </Sequence>
 
-      <CaptionOverlay text={subtitle} layoutMode="portrait" />
-    </SceneContainer>
+          {/* Sequence 3: Convergence Telemetry */}
+          <Sequence from={sec1Dur + sec2Dur} durationInFrames={sec3Dur}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "30px", paddingTop: "60px" }}>
+              <HUDTelemetry label="LOSS REDUCTION" value="0.0024" size={240} color="#22c55e" />
+              <HUDTelemetry label="PARAMETER UPDATE" value="AdamW" size={240} color="#38bdf8" />
+            </div>
+          </Sequence>
+        </CinematicCamera>
+
+        <CaptionOverlay text={subtitle} layoutMode="portrait" />
+      </SceneContainer>
+    </div>
   );
 };
 """
@@ -373,11 +392,13 @@ FEW-SHOT EXAMPLES FOR INSPIRATION:
 --- EXAMPLE 2 (Portrait 9:16) ---
 {FEW_SHOT_EXAMPLE_2}
 
-LAYOUT INSTRUCTIONS:
-- If layoutMode is 'portrait' (9:16 Shorts/Reels/TikTok): Use single vertical stack, place TitleCard at top, Timeline/Diagram in middle, and BulletReveal above bottom safe zone ({sz.bottom}px).
-- If layoutMode is 'landscape' (16:9 YouTube): Use wide multi-column layout or centered wide card.
-- If layoutMode is 'square' (1:1 Instagram): Use centered square box layout.
-- Wrap the entire scene in: <SceneContainer layoutMode="{video_format.layout_mode.value}" safeZone={{{{ top: {sz.top}, bottom: {sz.bottom}, left: {sz.left}, right: {sz.right} }}}}>.
+LAYOUT & MOTION GRAPHICS INSTRUCTIONS:
+- STRICT PROHIBITION: DO NOT create generic bullet point cards, slide decks, or walls of text!
+- ALWAYS include <DynamicBackdrop theme="aurora"|"cyber"|"nebula" showGrid={{true}} /> and <CinematicCamera> for deep cinematic visual float.
+- Use <KineticText> with glowing accentWords for punchy typography.
+- For each section, feature primary animated graphics: <HUDTelemetry>, <DiagramNodes>, <LineChart>, <BarChart>, <MapViewport>, or animated SVG diagrams.
+- Wrap the contents inside <SceneContainer layoutMode="{video_format.layout_mode.value}" safeZone={{{{ top: {sz.top}, bottom: {sz.bottom}, left: {sz.left}, right: {sz.right} }}}}>.
+- Keep text minimal and punchy; the visual motion graphics, telemetry gauges, and diagrams must be the hero of every frame.
 
 Return ONLY valid .tsx code."""
 

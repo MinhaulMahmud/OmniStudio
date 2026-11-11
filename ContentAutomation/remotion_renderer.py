@@ -159,8 +159,17 @@ class RemotionRenderer:
                 dur_sec = seg.get("duration", 4.0)
                 dur_frames = max(30, int(round(dur_sec * fps)))
                 text = seg.get("text", "")
-                heading = seg.get("heading") or f"Section {i+1}"
-                badge = seg.get("badge") or f"Step {i+1}"
+
+                # Match technical heading from script sections if available
+                heading = seg.get("heading")
+                if not heading and sections and i < len(sections):
+                    sec_item = sections[i]
+                    heading = sec_item.get("heading") if isinstance(sec_item, dict) else getattr(sec_item, "heading", None)
+                if not heading and sections:
+                    sec_item = sections[min(i, len(sections) - 1)]
+                    heading = sec_item.get("heading") if isinstance(sec_item, dict) else getattr(sec_item, "heading", None)
+                heading = heading or f"Stage 0{i+1}"
+                badge = seg.get("badge") or f"STAGE 0{i+1}"
 
                 bullets = [s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if len(s.strip()) > 8][:3]
                 if not bullets and text:

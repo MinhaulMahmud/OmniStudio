@@ -1,0 +1,6 @@
+# OmniStudio ContentAutomation Requirements
+yt-dlp>=2024.0.0
+requests>=2.28.0
+python-dotenv>=1.0.0
+pytest>=7.0.0
+pillow>=9.0.0

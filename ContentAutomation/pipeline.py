@@ -44,6 +44,7 @@ from voice_client import VoiceStudioClient
 from subtitle_generator import SubtitleGenerator
 from video_composer import VideoComposer
 from remotion_renderer import RemotionRenderer
+from remotion_synthesizer import RemotionSynthesizer
 
 # ─── Logging Setup ────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -73,6 +74,7 @@ class ContentAutomationPipeline:
         self.subtitle_gen = SubtitleGenerator()
         self.video_composer = VideoComposer()
         self.remotion = RemotionRenderer()
+        self.synthesizer = RemotionSynthesizer()
 
     # ─── Full Pipeline ────────────────────────────────────────────────────────
 
@@ -296,17 +298,38 @@ class ContentAutomationPipeline:
         if not skip_video:
             rendered_remotion = None
 
-            # 5A. Render Remotion React Motion Graphics Video
+            # 5A. AI Synthesized Remotion Motion Graphics Video
             if use_remotion and self.remotion.is_available():
-                logger.info("\n⚛️  STEP 5: Rendering Remotion Motion Graphics Explainer...")
+                logger.info("\n⚛️  STEP 5: Synthesizing & Rendering Remotion Visuals...")
                 remotion_path = run_dir / f"video_remotion_{self._safe_name(effective_topic)}.mp4"
-                
+
                 voice_label = "KittenTTS Explainer"
                 if voice_name and voice_name.lower() in ["minhaz", "clone"]:
                     voice_label = "Minhaz Voice"
                 elif voice_name:
                     voice_label = f"{voice_name} Voice"
 
+                # Invoke RemotionSynthesizer for dynamic React/TSX scene synthesis
+                t_synth_start = time.time()
+                audio_dur_s = audio_ms / 1000.0 if audio_ms else 10.0
+                v_keywords = getattr(analysis, "primary_keywords", []) + getattr(analysis, "key_concepts", [])
+
+                synthesized_scene = self.synthesizer.synthesize(
+                    topic=effective_topic,
+                    script=script,
+                    audio_duration_s=audio_dur_s,
+                    visual_keywords=v_keywords,
+                )
+                synth_duration = time.time() - t_synth_start
+                logger.info(
+                    "   🎨 Scene synthesized in %.2fs -> %s (Version: %s, Model: %s)",
+                    synth_duration,
+                    synthesized_scene.name,
+                    self.synthesizer.skills_version[:10],
+                    self.synthesizer.model,
+                )
+
+                t_render_start = time.time()
                 rendered_remotion = self.remotion.render(
                     audio_path=audio,
                     output_path=remotion_path,
@@ -317,11 +340,13 @@ class ContentAutomationPipeline:
                     sections=script.sections,
                     segment_timings=segment_timings,
                     narration_text=narration_text,
+                    composition_id="DynamicTopicScene",
                 )
+                render_duration = time.time() - t_render_start
                 if rendered_remotion and rendered_remotion.exists():
                     result["paths"]["video_remotion"] = str(rendered_remotion)
                     size_mb = rendered_remotion.stat().st_size / 1024 / 1024
-                    logger.info("   ✅ REMOTION 1080p: %s (%.1f MB)", rendered_remotion.name, size_mb)
+                    logger.info("   ✅ REMOTION 1080p: %s (%.1f MB in %.1fs)", rendered_remotion.name, size_mb, render_duration)
             elif use_remotion:
                 logger.warning("   ⚠️ Remotion not available; falling back to dynamic FFmpeg composition")
 
@@ -429,9 +454,44 @@ class ContentAutomationPipeline:
         print("═" * 70 + "\n")
 
 
+def check_first_run_environment():
+    """
+    First-run guard: if .env or remotion/node_modules is missing,
+    if sys.stdin.isatty() prompt to run setup.py, else exit with an actionable error.
+    Never hang on non-interactive runs.
+    """
+    root_dir = Path(__file__).resolve().parent.parent
+    env_file = Path(__file__).resolve().parent / ".env"
+    remotion_modules = Path(__file__).resolve().parent / "remotion" / "node_modules"
+
+    missing = []
+    if not env_file.exists():
+        missing.append(f".env file missing ({env_file})")
+    if not remotion_modules.exists():
+        missing.append(f"Remotion node_modules missing ({remotion_modules})")
+
+    if missing:
+        msg = "[!] OmniStudio first-run environment check failed:\n" + "\n".join(f"    - {m}" for m in missing)
+        if sys.stdin.isatty():
+            print(msg)
+            try:
+                ans = input("Would you like to run the Setup Wizard now? [Y/n]: ").strip().lower()
+                if ans in ("", "y", "yes"):
+                    setup_py = root_dir / "setup.py"
+                    if setup_py.exists():
+                        import subprocess
+                        subprocess.run([sys.executable, str(setup_py)], check=True)
+                        return
+            except Exception:
+                pass
+        print(f"\n{msg}\nPlease run 'python setup.py' to configure the required dependencies.")
+        sys.exit(1)
+
+
 # ─── CLI Interface ────────────────────────────────────────────────────────────
 
 def main():
+    check_first_run_environment()
     parser = argparse.ArgumentParser(
         description="Content Automation Pipeline — Voice-cloned video content creator",
         formatter_class=argparse.RawDescriptionHelpFormatter,

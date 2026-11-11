@@ -3,6 +3,7 @@
 > **Autonomous End-to-End AI Video Generation, Mechanical Simulation & Technical Content Engine**
 
 [![Remotion](https://img.shields.io/badge/Remotion-4.0-blue.svg?logo=react)](https://remotion.dev)
+[![Remotion Skills](https://img.shields.io/badge/Remotion%20Skills-Official%20Rules-blueviolet.svg)](https://github.com/remotion-dev/skills)
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue.svg?logo=python)](https://python.org)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B%20%7C%2020%2B%20%7C%2024%2B-green.svg?logo=node.js)](https://nodejs.org)
 [![KittenTTS](https://img.shields.io/badge/Voice-KittenTTS%20%26%20OmniVoice-orange.svg)](https://github.com/omniroute/openstudio)
@@ -72,16 +73,16 @@ The following diagram illustrates how raw user input flows through the 6 autonom
 flowchart TD
     User([User Prompt / Topic]) --> Stage1[Stage 1: Topic Intelligence Agent]
 
-    subgraph S1["1. Topic Intelligence & Self-Healing Research"]
-        Stage1 --> PreSearch[DuckDuckGo / Wikipedia Probe]
+    subgraph S1["1. Topic Intelligence & Dual Research Engine"]
+        Stage1 --> PreSearch[DuckDuckGo / Wikipedia Grounding]
         PreSearch --> TypoCheck{Typo / Anomaly Detected?}
         TypoCheck -- Yes --> Correct[AI Normalization & Canonization]
         TypoCheck -- No --> Canon[Canonical Topic & Keywords]
-        Correct --> Cascade{Search YouTube yt-dlp}
-        Canon --> Cascade
-        Cascade -- "< 2 Videos" --> WebFallback[Internet Search DuckDuckGo / Wiki Fallback]
-        Cascade -- ">= 2 Videos" --> Synthesize[Synthesize Ground Truth Research Data]
-        WebFallback --> Synthesize
+        Correct & Canon --> ConcurrentExec[Concurrent Dual Research ThreadPool]
+        ConcurrentExec --> YTSource[YouTube Metadata yt-dlp]
+        ConcurrentExec --> WebSource[Web Search: DuckDuckGo + Wikipedia + arXiv]
+        YTSource & WebSource --> AuthorityScorer[CreatorAuthorityScorer: Trusted Creators & Domains]
+        AuthorityScorer --> Synthesize[Synthesize Ground Truth Research Dossier]
     end
 
     subgraph S2["2. Script Generation Engine"]
@@ -110,13 +111,17 @@ flowchart TD
         SubGen --> VTT[WebVTT Subtitles]
     end
 
-    subgraph S5["5. Remotion React Motion Graphics Engine"]
-        Script & AudioConcat --> RemotionRenderer[Remotion Renderer Node.js + Chrome Headless]
-        RemotionRenderer --> MechEngine[Visual Mechanism Viewport]
-        MechEngine --> InvoluteGears[Meshing Involute Gears SVG]
-        MechEngine --> EngineCutaway[4-Stroke Reciprocating Engine Cutaway]
-        MechEngine --> CameraZoom[Internal Casing Dive Transition]
-        MechEngine --> GPUStream[HBM3 GPU Memory Bus Stream]
+    subgraph S5["5. Autonomous Remotion Visual Synthesizer"]
+        Script & AudioConcat --> RemotionSkills[Remotion Dev Skills Rules Engine]
+        RemotionSkills --> LLMSynthesizer[OpenRouter Llama 3.3 70B Synthesizer]
+        LLMSynthesizer --> DynamicTSX[Generated DynamicTopicScene.tsx]
+        DynamicTSX --> HybridLibrary[Hybrid Primitives: TitleCard, Charts, Timelines, Nodes, Math, Custom SVG]
+        DynamicTSX --> Validator[AST/Regex & TypeScript Validator + Smoke-Test Render]
+        Validator -- "Violations Found" --> RepairLoop[Auto-Repair Prompt Loop max 3x]
+        RepairLoop --> DynamicTSX
+        Validator -- "Fallback Needed" --> PresetFallback[Deterministic Primitives Fallback]
+        Validator -- "Verified Valid" --> RemotionRenderer[Remotion Renderer Node.js + Chrome Headless]
+        PresetFallback --> RemotionRenderer
         RemotionRenderer --> RemotionMP4[1080p React Motion Graphics Video]
     end
 
@@ -204,19 +209,26 @@ For compute and machine learning topics, OmniStudio renders hardware-accurate di
 
 ## 📦 Installation & Setup
 
-### Prerequisites
-1. **Python**: 3.10 or higher
-2. **Node.js**: 18.0 or higher
-3. **FFmpeg**: Installed and accessible in PATH (or auto-detected via `imageio-ffmpeg`)
-4. **VoiceStudio** (Optional, for local TTS / Voice Cloning): Running at `http://localhost:3900`
+### Quick Setup Wizard (Recommended)
+OmniStudio includes an interactive Setup Wizard that inspects your system, installs Python and Node.js dependencies, verifies Chrome Headless Shell, and configures your `.env` settings:
 
-### 1. Clone the Repository
 ```bash
 git clone https://github.com/MinhaulMahmud/OmniStudio.git
 cd OmniStudio
+
+# 1. Run the interactive setup wizard
+python setup.py
+
+# 2. Verify all diagnostics pass
+python setup.py --check
 ```
 
-### 2. Python Environment Setup
+### Manual Setup (Alternative)
+
+<details>
+<summary>Click to view manual step-by-step instructions</summary>
+
+#### 1. Python Environment Setup
 ```bash
 cd ContentAutomation
 python -m venv venv
@@ -229,21 +241,72 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3. Remotion Graphics Setup
+#### 2. Remotion Graphics Engine Setup
 ```bash
 cd remotion
 npm install
+npx remotion browser ensure
 cd ..
 ```
 
-### 4. Configure Environment Variables
-Copy `.env.example` to `.env` and insert your API keys:
+#### 3. Configure Environment Variables
+Copy `.env.example` to `.env` in `ContentAutomation/`:
 ```bash
 cp .env.example .env
 ```
+</details>
 
-Edit `ContentAutomation/.env`:
+### Configuration Reference (`ContentAutomation/.env`)
 ```env
+# Primary LLM API (OpenRouter)
+OPENROUTER_API_KEY=sk-or-v1-your-key-here
+OPENROUTER_MODEL=meta-llama/llama-3.3-70b-instruct
+
+# Voice Configuration
+VOICESTUDIO_URL=http://localhost:3900
+DEFAULT_VOICE=kitten
+TTS_PROVIDER=kitten
+```
+
+---
+
+## 🎨 AI Remotion Visual Synthesizer & Hybrid Primitives
+
+### Why the Architecture Evolved Beyond Hardcoded Scenes
+In early prototypes, OmniStudio demonstrated specific mechanical proof-of-concept visual viewports (e.g., *Meshing Involute Gears* for motorcycle gearboxes, and *HBM3 GPU Silicon Bus Streams* for AI model weight explainers). 
+
+In production, **OmniStudio does not hardcode scenes**. Instead, it uses an **Autonomous AI Visual Synthesizer** (`remotion_synthesizer.py`) that generates customized React motion graphics for **any arbitrary topic** (from jet propulsion and quantum computers to photosynthesis and cardiovascular hemodynamics).
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                   AI Visual Synthesizer Architecture                   │
+├────────────────────────────────┬───────────────────────────────────────┤
+│ 1. Remotion Dev Skills         │ Rules from remotion-dev/skills pinned │
+│    (Prompt Compiler)           │ at 1fc074b7. Enforces frame-driven    │
+│                                │ interpolate(), safe-area layouts, etc.│
+├────────────────────────────────┼───────────────────────────────────────┤
+│ 2. Hybrid Scene Primitives     │ Reusable, frame-tested building blocks:│
+│    (remotion/src/primitives/)  │ TitleCard, BulletReveal, BarChart,     │
+│                                │ LineChart, Timeline, DiagramNodes,    │
+│                                │ Counter, and CaptionOverlay.          │
+├────────────────────────────────┼───────────────────────────────────────┤
+│ 3. AST & TSC Validator         │ Rejects CSS transitions, @keyframes,   │
+│    (validate_scene.py)         │ unallowed imports, and syntax errors. │
+├────────────────────────────────┼───────────────────────────────────────┤
+│ 4. Smoke-Test Render & Repair  │ Renders a test still frame via Remotion│
+│    (Auto-Repair Loop)          │ CLI. Auto-repairs errors up to 3x,     │
+│                                │ or falls back safely to primitives.   │
+└────────────────────────────────┴───────────────────────────────────────┘
+```
+
+### Generative Visual Capabilities & Boundaries
+* **What it generates autonomously**:
+  - Structured infographic cards, dynamic counters, and multi-step timeline flows.
+  - Mathematical comparison graphs, bar charts, and coordinate node-diagrams.
+  - Domain-specific procedural SVG animations (e.g., turbine rotors, cutaway casings, fluid flow paths) driven purely by `interpolate(frame, ...)` and `spring()`.
+* **Current Boundaries**:
+  - Renders 2D motion graphics and isometric SVG animations; it does not generate full 3D polygon meshes or ray-traced CAD files.
+  - Adheres strictly to safe margins ($1920 \times 1080$ and $1080 \times 1920$) and uses no external CSS keyframe stylesheets.
 # OpenRouter API Key (Recommended for high-accuracy scripts)
 OPENROUTER_API_KEY=your_openrouter_api_key_here
 OPENROUTER_MODEL=meta-llama/llama-3.3-70b-instruct

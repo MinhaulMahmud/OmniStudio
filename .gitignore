@@ -43,6 +43,13 @@ node_modules/
 .yarn/
 .remotion/
 chrome-headless-shell/
+remotion/out/
+ContentAutomation/remotion/out/
+ContentAutomation/remotion/props_*.json
+remotion/props_*.json
+remotion/src/scenes/generated/*
+ContentAutomation/remotion/src/scenes/generated/*
+!ContentAutomation/remotion/src/scenes/generated/.gitkeep
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

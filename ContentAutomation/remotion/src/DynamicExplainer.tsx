@@ -20,6 +20,13 @@ export interface DynamicSection {
   durationFrames: number;
   badge?: string;
   bullets?: string[];
+  visualCue?: string;
+  graphicType?: string;
+  keyMetric?: {
+    label: string;
+    value: string;
+    unit?: string;
+  };
 }
 
 export interface DynamicExplainerProps {
@@ -319,6 +326,7 @@ const SectionSlide: React.FC<SectionSlideProps> = ({
           justifyContent: "center",
           alignItems: "center",
           width: "100%",
+          position: "relative",
         }}
       >
         <VisualMechanismViewport
@@ -329,6 +337,57 @@ const SectionSlide: React.FC<SectionSlideProps> = ({
           width={isPortrait ? 960 : 1140}
           height={isPortrait ? 660 : 640}
         />
+
+        {/* Floating Telemetry Key Metric HUD */}
+        {section.keyMetric && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: isPortrait ? "16px" : "24px",
+              right: isPortrait ? "16px" : "32px",
+              padding: "10px 20px",
+              background: "rgba(5, 7, 17, 0.88)",
+              border: "1px solid rgba(0, 229, 255, 0.4)",
+              borderRadius: "14px",
+              boxShadow: "0 0 20px rgba(0, 229, 255, 0.25), inset 0 0 10px rgba(0, 229, 255, 0.08)",
+              backdropFilter: "blur(12px)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "3px",
+              zIndex: 30,
+            }}
+          >
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                letterSpacing: "1.2px",
+                color: "rgba(255, 255, 255, 0.6)",
+                textTransform: "uppercase",
+              }}
+            >
+              {section.keyMetric.label}
+            </span>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+              <span
+                style={{
+                  fontSize: isPortrait ? "22px" : "26px",
+                  fontWeight: 900,
+                  color: "#00e5ff",
+                  fontFamily: "monospace",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                {section.keyMetric.value}
+              </span>
+              {section.keyMetric.unit && (
+                <span style={{ fontSize: "14px", fontWeight: 700, color: "#38bdf8" }}>
+                  {section.keyMetric.unit}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

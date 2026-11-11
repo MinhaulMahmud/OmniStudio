@@ -175,6 +175,10 @@ class RemotionRenderer:
                 if not bullets and text:
                     bullets = [text]
 
+                visual_cue = sec_item.get("visual_cue", "") if isinstance(sec_item, dict) else ""
+                graphic_type = sec_item.get("graphic_type", "") if isinstance(sec_item, dict) else ""
+                key_metric = sec_item.get("key_metric") if isinstance(sec_item, dict) else None
+
                 dynamic_sections.append({
                     "heading": heading,
                     "text": text,
@@ -182,6 +186,9 @@ class RemotionRenderer:
                     "durationFrames": dur_frames,
                     "badge": badge,
                     "bullets": bullets,
+                    "visualCue": visual_cue,
+                    "graphicType": graphic_type,
+                    "keyMetric": key_metric,
                 })
                 cumulative_frame += dur_frames
         elif sections:
@@ -191,6 +198,10 @@ class RemotionRenderer:
                 dur_frames = int(hint * fps)
                 text = sec.get("text", "")
                 bullets = [s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if len(s.strip()) > 8][:3]
+                visual_cue = sec.get("visual_cue", "")
+                graphic_type = sec.get("graphic_type", "")
+                key_metric = sec.get("key_metric")
+
                 dynamic_sections.append({
                     "heading": sec.get("heading", f"Key Point {i+1}"),
                     "text": text,
@@ -198,6 +209,9 @@ class RemotionRenderer:
                     "durationFrames": dur_frames,
                     "badge": f"Point {i+1}",
                     "bullets": bullets or [text],
+                    "visualCue": visual_cue,
+                    "graphicType": graphic_type,
+                    "keyMetric": key_metric,
                 })
                 cumulative_frame += dur_frames
         else:

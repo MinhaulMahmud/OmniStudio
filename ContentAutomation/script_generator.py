@@ -114,10 +114,17 @@ class VideoScript:
 # ─── Prompts ──────────────────────────────────────────────────────────────────
 
 SCRIPT_PROMPTS = {
-    "youtube": """You are an expert technical explainer scriptwriter and AI researcher. Write a 100% authentic, factually precise video script with ZERO misconceptions.
+    "youtube": """You are an elite motion graphics explainer director and technical scriptwriter.
+Write an authentic, factually precise video script with ZERO misconceptions and synchronized visual choreography.
 
 TOPIC: {topic}
-RESEARCH INSIGHTS & GROUND TRUTH: {insights}
+RESEARCH INSIGHTS & COMPETITOR TRANSCRIPTS:
+{insights}
+
+COMPETITOR ANALYSIS & HOOK DIRECTIVE:
+- Carefully analyze the competitor spoken transcripts and hooks provided above.
+- Identify the core reason their video hooked viewers, but also identify technical gaps or fluff they included.
+- Your hook MUST outperform them in the first 3 seconds: frame the core physical, mathematical, or architectural mechanism immediately.
 
 STRICT TECHNICAL ACCURACY REQUIREMENTS:
 - NO misconceptions, NO generic AI hype, NO fabricated numbers.
@@ -126,40 +133,57 @@ STRICT TECHNICAL ACCURACY REQUIREMENTS:
   * Exact Memory Formula: Model VRAM (GB) = Parameters (Billions) × Precision Bytes (FP16/BF16 = 2 bytes; INT8 = 1 byte; INT4 = 0.5 bytes). Always mention adding 20-25% extra memory for KV-cache and CUDA overhead.
   * Clearly distinguish Compute (FLOPs) vs Memory Bandwidth (GB/s): Generating tokens (autoregressive decode) is memory-bandwidth bound (reading all weights from VRAM for every single token); prompt processing (prefill) is compute bound.
   * Explain why quantization (e.g. 4-bit / 8-bit) allows running larger models on consumer GPUs without losing core intelligence.
-- Start with a clear, authentic hook that immediately frames the core engineering principle.
-- Break content into 4 to 6 clear visual sections with smooth transitions.
-- Target length: 60 to 90 seconds (180-260 words total).
-- Spoken explainer voiceover delivery for KittenTTS.
+- If explaining Jet Propulsion & Turbofans:
+  * Cold Bypass Stream: 80-90% of total thrust produced by the huge front fan pushing air around the engine core.
+  * Core Stages: Axial compressor spools compress intake air (high pressure ratio 40:1) into the annular combustor.
+  * Expansion: Ignited kerosene/air mixture expands through high and low pressure turbines driving the front fan.
+  * Nozzle & Exhaust: Convergent nozzle accelerates core flow, creating net forward momentum: F = m_dot * (v_exhaust - v_inlet).
+
+VISUAL STORYBOARD REQUIREMENTS:
+- Break content into 4 to 6 logical stages. NEVER output a single monolithic section.
+- For each stage, define:
+  1. heading: 2-4 word punchy stage title (e.g. "Stage 01: Cold Air Bypass").
+  2. text: 2-3 spoken narration sentences (exact, natural voiceover for KittenTTS).
+  3. visual_cue: Concrete visual action to animate in the Remotion viewport (e.g. "Zoom into rotating titanium fan blades as cyan particle stream splits into bypass duct and core").
+  4. graphic_type: One of ["turbofan", "mechanism", "compute", "map", "telemetry", "formula"].
+  5. key_metric: High-impact telemetry badge data, e.g. {{"label": "Bypass Ratio", "value": "10:1", "unit": ""}} or {{"label": "Air Flow", "value": "1,200", "unit": "kg/s"}}.
+  6. duration_hint: Estimated duration in seconds (10 to 25 seconds per stage).
 
 Respond with ONLY valid JSON (no markdown, no backticks):
-{{"title":"Accurate, engaging explainer title","hook":"First 2-3 clear sentences setting the technical reality","sections":[{{"heading":"Section Heading","text":"2-3 spoken sentences explaining the concept with exact clarity","duration_hint":15}}],"cta":"Call-to-action text","tags":["tag1","tag2"],"seo_description":"Accurate YouTube description"}}""",
+{{"title":"Authentic Engineering Title","hook":"First 2-3 punchy sentences setting the technical reality","sections":[{{"heading":"Stage 01: Cold Air Bypass","text":"Modern turbofans get up to 90% of their thrust without ever burning a single drop of fuel in that air stream. The massive titanium front fan pushes cold air directly around the core.","visual_cue":"Titanium front fan accelerates to 3,000 RPM while cold bypass particles glow cyan around outer cowl","graphic_type":"turbofan","key_metric":{{"label":"Bypass Ratio","value":"10:1","unit":""}},"duration_hint":15}},{{"heading":"Stage 02: Core Compression","text":"Only 10 to 20% of incoming air enters the engine core. Multi-stage axial compressors squeeze this air to over 40 times atmospheric pressure, raising its temperature past 600 degrees Celsius before it reaches the burners.","visual_cue":"Compressor spools rotate in counter-phase as pressure gauge surges from 1 to 40 atm","graphic_type":"turbofan","key_metric":{{"label":"Pressure Ratio","value":"40:1","unit":"atm"}},"duration_hint":18}},{{"heading":"Stage 03: Combustor & Expansion","text":"Fuel injectors spray atomized kerosene into the compressed airflow. The combustion releases immense energy, expanding gases through high-pressure turbine blades that spin the drive shaft.","visual_cue":"Annular combustion chambers pulse intense orange-blue flames into the turbine blades","graphic_type":"turbofan","key_metric":{{"label":"Core Temp","value":"1,700","unit":"°C"}},"duration_hint":16}},{{"heading":"Stage 04: Supersonic Exhaust Nozzle","text":"Finally, the convergent exhaust nozzle accelerates core gases to supersonic velocities. By Newton's third law, accelerating that mass backward creates relentless forward thrust.","visual_cue":"Exhaust gas forms supersonic shock diamonds while net thrust vector pushes airframe forward","graphic_type":"turbofan","key_metric":{{"label":"Net Thrust","value":"450","unit":"kN"}},"duration_hint":15}}],"cta":"Subscribe for more authentic engineering breakdowns.","tags":["aviation","engineering","jetengine"],"seo_description":"How jet engines and high-bypass turbofans work with step-by-step physics."}}""",
 
-    "shorts": """You are a technical Shorts creator. Create an authentic 45-60 second explainer with ZERO misconceptions.
+    "shorts": """You are an elite technical Shorts creator and visual director. Create an authentic 45-60 second explainer with ZERO misconceptions and synchronized visual cues.
 
 TOPIC: {topic}
-RESEARCH INSIGHTS & GROUND TRUTH: {insights}
+RESEARCH INSIGHTS & COMPETITOR TRANSCRIPTS:
+{insights}
+
+COMPETITOR ANALYSIS & HOOK DIRECTIVE:
+- Review the competitor spoken transcripts and hooks above.
+- Craft an immediate hook in the first 3 seconds that debunks a misconception or states an unexpected physical fact.
+- Beat competitor retention by eliminating all filler and explaining with rapid, visual clarity.
 
 STRICT REQUIREMENTS:
-- Immediate technical hook debunking common confusion in the first 3 seconds.
-- Deliver exact mathematical or architectural truth clearly (under 140 words).
-- No fluff, no false claims. Perfect for fast KittenTTS narration.
+- Break content into 3 to 4 progressive visual scenes. DO NOT output a single monolithic section.
+- Total narration word count across hook, sections, and cta must be between 110 and 140 words.
+- For each section, provide heading, text, visual_cue, graphic_type, key_metric, and duration_hint.
 
 Respond with ONLY valid JSON (no markdown, no backticks):
-{{"title":"Shorts title under 60 chars","hook":"First punchy sentence","sections":[{{"heading":"The Real Formula","text":"80-100 word precise explanation","duration_hint":45}}],"cta":"Quick CTA","tags":["shorts","tech"],"seo_description":"Accurate description"}}""",
+{{"title":"Shorts Title under 60 chars","hook":"First punchy sentence debunking a myth in 3 seconds","sections":[{{"heading":"Phase 1: Intake & Bypass","text":"Most people think jet engines burn fuel to move forward, but 85% of modern airliner thrust is pure cold air propelled by the front fan.","visual_cue":"Front fan spins up as cyan bypass streams flank the engine cowl","graphic_type":"turbofan","key_metric":{{"label":"Bypass Thrust","value":"85%","unit":""}},"duration_hint":14}},{{"heading":"Phase 2: Core Compression","text":"The remaining air gets squeezed by multi-stage compressors to 40 times atmospheric pressure before reaching the combustion chamber.","visual_cue":"Axial compressor stages squeeze airflow into tight high-pressure core","graphic_type":"turbofan","key_metric":{{"label":"Compression","value":"40:1","unit":""}},"duration_hint":15}},{{"heading":"Phase 3: Supersonic Expansion","text":"Fuel ignites at 1,700 degrees Celsius, driving the turbine and shooting out the exhaust nozzle to produce massive forward momentum.","visual_cue":"Combustor glows orange while nozzle ejects high-velocity shock diamonds","graphic_type":"turbofan","key_metric":{{"label":"Max Thrust","value":"450","unit":"kN"}},"duration_hint":16}}],"cta":"Subscribe for real engineering physics!","tags":["shorts","engineering","science"],"seo_description":"The real physics of how jet engines create thrust."}}""",
 
-    "tiktok": """You are a viral TikTok scriptwriter. Create a 30-60 second addictive script.
+    "tiktok": """You are a viral TikTok scriptwriter and technical visual director. Create an addictive 30-50 second explainer.
 
 TOPIC: {topic}
-RESEARCH INSIGHTS: {insights}
+RESEARCH INSIGHTS & COMPETITOR TRANSCRIPTS:
+{insights}
 
 Requirements:
-- Trending TikTok style: fast, surprising, emotional
-- Start mid-thought or with a controversial statement
-- Maximum 120 words
-- Must feel authentic
+- Hook viewer mid-thought or with a shocking technical comparison in the first 2 seconds.
+- Break into 3 rapid visual sections with visual_cue and key_metric.
+- Total words under 120.
 
 Respond with ONLY valid JSON (no markdown, no backticks):
-{{"title":"TikTok caption","hook":"Shocking opener","sections":[{{"heading":"Core","text":"80-100 word narration","duration_hint":40}}],"cta":"Viral CTA","tags":["fyp","viral"],"seo_description":"Caption with hashtags"}}""",
+{{"title":"TikTok title","hook":"Shocking technical opener","sections":[{{"heading":"The Big Lie","text":"Here is why everything you were told about this is wrong.","visual_cue":"Red warning HUD flashes as mechanism activates","graphic_type":"mechanism","key_metric":{{"label":"Status","value":"Active","unit":""}},"duration_hint":12}},{{"heading":"The Hidden Mechanism","text":"Inside the system, this specific process drives everything.","visual_cue":"Camera zooms into high-speed spinning components","graphic_type":"mechanism","key_metric":{{"label":"Efficiency","value":"94%","unit":""}},"duration_hint":14}},{{"heading":"The Real Formula","text":"That is why this single metric determines whether it works or fails.","visual_cue":"Formula overlay reveals mathematical truth","graphic_type":"formula","key_metric":{{"label":"Result","value":"10x","unit":""}},"duration_hint":14}}],"cta":"Drop your thoughts in the comments!","tags":["fyp","tech","viral"],"seo_description":"The hidden truth explained in 40 seconds."}}""",
 }
 
 
@@ -699,10 +723,12 @@ class ScriptGenerator:
                 )
             else:
                 views = f"{idea.view_count:,}" if idea.view_count else "unknown"
-                lines.append(
-                    f"{i}. [📹 Video Idea] '{idea.title}' | {views} views"
-                    + (f" | Hook: {idea.hook[:100]}" if idea.hook else "")
-                )
+                entry = f"{i}. [📹 Video Reference] '{idea.title}' | {views} views"
+                if idea.hook:
+                    entry += f"\n   Hook: \"{idea.hook[:140]}\""
+                if getattr(idea, "transcript", ""):
+                    entry += f"\n   Spoken Transcript Excerpt: \"{idea.transcript[:450]}...\""
+                lines.append(entry)
         return "\n".join(lines)
 
     # ─── Template Fallback ────────────────────────────────────────────────────

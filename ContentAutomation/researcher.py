@@ -10,11 +10,14 @@ Integrated with:
 """
 from __future__ import annotations
 
+import glob
 import json
 import logging
+import os
 import re
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -57,6 +60,7 @@ class VideoIdea:
     suggested_title: str = ""   # AI-suggested title for our content
     engagement_rate: float = 0.0
     source_type: str = "video"  # "video" or "web"
+    transcript: str = ""        # Spoken audio transcript extracted from video subtitles
 
     def to_dict(self) -> dict:
         return {
@@ -74,7 +78,45 @@ class VideoIdea:
             "upload_date": self.upload_date,
             "engagement_rate": self.engagement_rate,
             "source_type": self.source_type,
+            "transcript": self.transcript[:500] if self.transcript else "",
         }
+
+
+def parse_vtt_subtitles(vtt_content: str) -> str:
+    """
+    Parse WebVTT subtitle text into a clean continuous transcript string,
+    removing headers, timestamps, formatting tags, and duplicate consecutive cues.
+    """
+    lines = vtt_content.splitlines()
+    cleaned: list[str] = []
+    prev_line = ""
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        # Skip WebVTT headers & metadata lines
+        if (
+            line.startswith("WEBVTT")
+            or line.startswith("Kind:")
+            or line.startswith("Language:")
+            or line.startswith("NOTE")
+            or "-->" in line
+        ):
+            continue
+        # Skip numeric cue identifiers
+        if re.match(r"^\d+$", line):
+            continue
+        # Strip inline HTML/VTT formatting tags e.g. <c>, </c>, <00:01:23.000>
+        line = re.sub(r"<[^>]+>", "", line).strip()
+        # Skip pure musical notes or audio cues e.g. ♪ or [Applause]
+        if line.startswith("♪") and line.endswith("♪"):
+            continue
+        if re.match(r"^\[.*?\]$", line):
+            continue
+        if line and line != prev_line:
+            cleaned.append(line)
+            prev_line = line
+    return " ".join(cleaned)
 
 
 class ContentResearcher:
@@ -150,6 +192,53 @@ class ContentResearcher:
         except Exception as exc:
             logger.error("yt-dlp failed: %s", exc)
             return None
+
+    def fetch_video_transcript(self, video_url: str, timeout: int = 15) -> str:
+        """
+        Extract spoken transcript/subtitles for a YouTube video using yt-dlp without downloading media.
+        Returns cleaned continuous transcript or empty string if not available.
+        """
+        if not video_url:
+            return ""
+
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                out_tmpl = os.path.join(tmpdir, "sub.%(ext)s")
+                cmd = [
+                    sys.executable,
+                    "-m",
+                    "yt_dlp",
+                    "--write-auto-subs",
+                    "--write-subs",
+                    "--sub-langs",
+                    "en.*,en",
+                    "--skip-download",
+                    "--sub-format",
+                    "vtt",
+                    "-o",
+                    out_tmpl,
+                    "--no-warnings",
+                    "--quiet",
+                    video_url,
+                ]
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                    encoding="utf-8",
+                    errors="replace",
+                )
+                vtt_files = glob.glob(os.path.join(tmpdir, "*.vtt"))
+                if vtt_files:
+                    with open(vtt_files[0], "r", encoding="utf-8", errors="replace") as f:
+                        raw_vtt = f.read()
+                    return parse_vtt_subtitles(raw_vtt)
+        except subprocess.TimeoutExpired:
+            logger.debug("Transcript extraction timed out for %s", video_url)
+        except Exception as exc:
+            logger.debug("Transcript extraction failed for %s: %s", video_url, exc)
+        return ""
 
     def search_youtube(
         self,
@@ -285,6 +374,31 @@ class ContentResearcher:
             reverse=True,
         )
 
+        # ─── Stage 4: Extract Competitor Spoken Transcripts ──────────────────
+        video_candidates = [
+            i for i in ideas
+            if i.source_type == "video" and i.url and ("youtube" in i.url.lower() or "youtu.be" in i.url.lower())
+        ]
+        for candidate in video_candidates[:2]:
+            try:
+                transcript = self.fetch_video_transcript(candidate.url)
+                if transcript:
+                    candidate.transcript = transcript
+                    # If description hook is weak, derive hook directly from spoken audio
+                    spoken_sentences = [
+                        s.strip()
+                        for s in re.split(r"(?<=[.!?])\s+", transcript)
+                        if len(s.strip()) > 15
+                    ]
+                    if spoken_sentences:
+                        candidate.hook = spoken_sentences[0][:200]
+                    logger.info(
+                        "🎤 Extracted competitor spoken transcript for '%s' (%d words)",
+                        candidate.title[:45], len(transcript.split())
+                    )
+            except Exception as exc:
+                logger.debug("Failed extracting transcript for %s: %s", candidate.url, exc)
+
         return ideas, analysis
 
     def research_topics(
@@ -372,4 +486,7 @@ class ContentResearcher:
                 print(f"     👁 {views} views | ⏱ {duration} | 💬 {idea.comment_count:,}")
                 if idea.hook:
                     print(f"     💡 Hook: {idea.hook[:100]}")
+                if getattr(idea, "transcript", ""):
+                    word_cnt = len(idea.transcript.split())
+                    print(f"     🎙 Script Extracted: ✅ {word_cnt} spoken words analyzed")
         print(f"\n{'═'*70}\n")

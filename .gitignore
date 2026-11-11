@@ -61,6 +61,8 @@ lerna-debug.log*
 
 # Large Generated Media & Artifacts (Keep folders clean)
 *.mp4
+!assets/demo/*.mp4
+!assets/demo/*.gif
 *.mkv
 *.avi
 *.mov

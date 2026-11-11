@@ -14,6 +14,7 @@
 
 ## 📖 Table of Contents
 
+- [Product Demo](#-product-demo)
 - [Overview](#-overview)
 - [System Architecture](#-system-architecture)
 - [Key Features](#-key-features)
@@ -34,6 +35,19 @@
 - [Configuration Reference](#-configuration-reference)
 - [Roadmap & Contributing](#-roadmap--contributing)
 - [License](#-license)
+
+---
+
+## 🎬 Product Demo
+
+<p align="center">
+  <img src="assets/demo/omnistudio_demo.gif" alt="OmniStudio Product Demo - AI Model Weights & Compute Power" width="850px" style="border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);" />
+</p>
+
+<p align="center">
+  ▶️ <b>Watch the Full 1080p Video with Narration</b>: <a href="assets/demo/omnistudio_demo.mp4"><code>assets/demo/omnistudio_demo.mp4</code></a> (1m 18s)<br>
+  <i>Features: KittenTTS voice synthesis, real-time parameter counter matrices, memory equation formulas, and high-speed GPU memory bandwidth streaming.</i>
+</p>
 
 ---
 

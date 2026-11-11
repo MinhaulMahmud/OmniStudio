@@ -127,6 +127,49 @@ RULES_REGISTRY: list[dict] = [
             "wider than 900px in portrait mode."
         ),
     },
+    {
+        "id": "rule_ban_presentation_boxes",
+        "severity": "hard",
+        "tags": ["motion", "styling", "anti-slide"],
+        "source_file": "remotion-create/video-layout.md",
+        "text": (
+            "NEVER enclose content in static rectangular presentation cards or slide boxes with rounded borders "
+            "and semi-transparent backgrounds. Explainer videos must look like modern motion graphics (Vox / Kurzgesagt style) "
+            "using full-bleed kinetic canvases and procedural motion primitives."
+        ),
+    },
+    {
+        "id": "rule_ban_bullet_lists",
+        "severity": "hard",
+        "tags": ["typography", "anti-slide"],
+        "source_file": "remotion-create/video-layout.md",
+        "text": (
+            "NEVER use bullet points, bullet symbols, or HTML list elements (ul/ol/li). "
+            "Explainer videos are watched, not read like PowerPoint lecture decks. "
+            "Use KineticText with max 3-7 words per phrase to highlight hero concepts."
+        ),
+    },
+    {
+        "id": "rule_use_motion_primitives",
+        "severity": "hard",
+        "tags": ["composition", "motion"],
+        "source_file": "remotion-markup/multi-scene-video.md",
+        "text": (
+            "You MUST compose scenes using motion primitives from '../primitives/': "
+            "CinematicCamera (continuous slow dolly/zoom), DynamicBackdrop (ambient shifting aurora & particles), "
+            "KineticText (word-by-word spring reveals), HUDTelemetry (spinning reticles), and EnergyPulse (expanding rings)."
+        ),
+    },
+    {
+        "id": "rule_continuous_frame_momentum",
+        "severity": "hard",
+        "tags": ["motion", "animation"],
+        "source_file": "remotion-markup/REFERENCE.md",
+        "text": (
+            "Zero static frames: every scene MUST feature continuous frame momentum "
+            "(e.g. CinematicCamera drift, shifting aurora angle, or particle drift) so the composition feels constantly alive."
+        ),
+    },
     # Soft Guidance Rules
     {
         "id": "rule_soft_perceptual_scale",

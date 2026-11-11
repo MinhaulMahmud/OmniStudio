@@ -9,6 +9,9 @@ import {
   useVideoConfig,
 } from "remotion";
 import { VisualMechanismViewport } from "./components/VisualMechanismViewport";
+import { DynamicBackdrop } from "./scenes/primitives/DynamicBackdrop";
+import { CinematicCamera } from "./scenes/primitives/CinematicCamera";
+import { KineticText } from "./scenes/primitives/KineticText";
 
 export interface DynamicSection {
   heading: string;
@@ -45,24 +48,16 @@ export const DynamicExplainer: React.FC<DynamicExplainerProps> = ({
   // Overall timeline progress (0 -> 100%)
   const progressPercent = Math.min(100, Math.max(0, (frame / (totalFrames || 1)) * 100));
 
-  // Ambient background glow pulse
-  const ambientPulse = interpolate(
-    Math.sin(frame / 20),
-    [-1, 1],
-    [0.15, 0.35]
-  );
-
   return (
     <div
       style={{
         flex: 1,
         width: "100%",
         height: "100%",
-        backgroundColor: "#070714",
-        backgroundImage: `radial-gradient(circle at 50% 30%, rgba(99, 102, 241, ${ambientPulse}) 0%, #070714 75%)`,
+        backgroundColor: "#050711",
         display: "flex",
         flexDirection: "column",
-        fontFamily: "'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         color: "#ffffff",
         position: "relative",
         overflow: "hidden",
@@ -71,21 +66,8 @@ export const DynamicExplainer: React.FC<DynamicExplainerProps> = ({
       {/* Background Narration Audio */}
       {audioFile && <Audio src={staticFile(audioFile)} />}
 
-      {/* Decorative Cybernetic Background Grid */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          backgroundImage: `
-            linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
-          `,
-          backgroundSize: "60px 60px",
-          maskImage: "radial-gradient(circle at 50% 50%, black 40%, transparent 80%)",
-          WebkitMaskImage: "radial-gradient(circle at 50% 50%, black 40%, transparent 80%)",
-          pointerEvents: "none",
-        }}
-      />
+      {/* Dynamic Multi-Layer Animated Motion Backdrop */}
+      <DynamicBackdrop theme="aurora" particleCount={isPortrait ? 28 : 36} showGrid={true} />
 
       {/* Top Header & Brand Bar */}
       <div
@@ -99,7 +81,7 @@ export const DynamicExplainer: React.FC<DynamicExplainerProps> = ({
           alignItems: "center",
           justifyContent: "space-between",
           padding: isPortrait ? "30px 40px 0 40px" : "0 60px",
-          background: "linear-gradient(to bottom, rgba(7, 7, 20, 0.95), transparent)",
+          background: "linear-gradient(to bottom, rgba(5, 7, 17, 0.95), transparent)",
           zIndex: 50,
         }}
       >
@@ -109,22 +91,22 @@ export const DynamicExplainer: React.FC<DynamicExplainerProps> = ({
               width: "12px",
               height: "12px",
               borderRadius: "50%",
-              backgroundColor: "#22c55e",
-              boxShadow: "0 0 12px #22c55e",
+              backgroundColor: "#00e5ff",
+              boxShadow: "0 0 14px #00e5ff",
             }}
           />
-          <span style={{ fontSize: "20px", fontWeight: 700, letterSpacing: "1.5px", color: "#a5b4fc" }}>
-            VOICESTUDIO AI
+          <span style={{ fontSize: isPortrait ? "18px" : "20px", fontWeight: 800, letterSpacing: "1.5px", color: "#38bdf8" }}>
+            OMNISTUDIO
           </span>
           <span style={{ color: "rgba(255,255,255,0.3)" }}>|</span>
           <span
             style={{
-              fontSize: "14px",
+              fontSize: isPortrait ? "12px" : "14px",
               padding: "4px 12px",
               borderRadius: "20px",
-              backgroundColor: "rgba(99, 102, 241, 0.15)",
-              border: "1px solid rgba(99, 102, 241, 0.4)",
-              color: "#c7d2fe",
+              backgroundColor: "rgba(56, 189, 248, 0.15)",
+              border: "1px solid rgba(56, 189, 248, 0.4)",
+              color: "#bae6fd",
               letterSpacing: "0.5px",
             }}
           >
@@ -146,14 +128,14 @@ export const DynamicExplainer: React.FC<DynamicExplainerProps> = ({
                 style={{
                   width: "4px",
                   height: `${h}px`,
-                  backgroundColor: i % 2 === 0 ? "#818cf8" : "#c084fc",
+                  backgroundColor: i % 2 === 0 ? "#00e5ff" : "#818cf8",
                   borderRadius: "2px",
-                  boxShadow: "0 0 8px rgba(129, 140, 248, 0.6)",
+                  boxShadow: "0 0 8px rgba(0, 229, 255, 0.6)",
                 }}
               />
             );
           })}
-          <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.7)", marginLeft: "8px", fontWeight: 600 }}>
+          <span style={{ fontSize: isPortrait ? "12px" : "14px", color: "rgba(255,255,255,0.7)", marginLeft: "8px", fontWeight: 600 }}>
             {voiceBadge}
           </span>
         </div>
@@ -175,34 +157,35 @@ export const DynamicExplainer: React.FC<DynamicExplainerProps> = ({
           style={{
             height: "100%",
             width: `${progressPercent}%`,
-            background: "linear-gradient(90deg, #6366f1, #a855f7, #38bdf8)",
-            boxShadow: "0 0 10px #6366f1",
+            background: "linear-gradient(90deg, #00e5ff, #818cf8, #ec4899)",
+            boxShadow: "0 0 10px #00e5ff",
           }}
         />
       </div>
 
-      {/* Dynamic Content Sections */}
-      {sections.length > 0 ? (
-        sections.map((sec, idx) => (
-          <Sequence
-            key={idx}
-            from={sec.startFrame}
-            durationInFrames={sec.durationFrames}
-          >
-            <SectionSlide
-              section={sec}
-              sectionIndex={idx}
-              totalSections={sections.length}
-              mainTitle={title}
-            />
+      {/* Dynamic Motion Graphic Content Canvas */}
+      <CinematicCamera drift="zoom-in" intensity={0.05}>
+        {sections.length > 0 ? (
+          sections.map((sec, idx) => (
+            <Sequence
+              key={idx}
+              from={sec.startFrame}
+              durationInFrames={sec.durationFrames}
+            >
+              <SectionSlide
+                section={sec}
+                sectionIndex={idx}
+                totalSections={sections.length}
+                mainTitle={title}
+              />
+            </Sequence>
+          ))
+        ) : (
+          <Sequence from={0} durationInFrames={totalFrames}>
+            <HeroSlide title={title} subtitle={subtitle} />
           </Sequence>
-        ))
-      ) : (
-        /* Fallback Single Hero Slide when no sections are passed */
-        <Sequence from={0} durationInFrames={totalFrames}>
-          <HeroSlide title={title} subtitle={subtitle} />
-        </Sequence>
-      )}
+        )}
+      </CinematicCamera>
 
       {/* Bottom Subtitle Caption Overlay Bar */}
       <div
@@ -211,25 +194,25 @@ export const DynamicExplainer: React.FC<DynamicExplainerProps> = ({
           bottom: isPortrait ? "180px" : "35px",
           left: isPortrait ? "40px" : "80px",
           right: isPortrait ? "40px" : "80px",
-          minHeight: "75px",
-          padding: "16px 28px",
+          minHeight: "70px",
+          padding: "14px 24px",
           borderRadius: "16px",
-          backgroundColor: "rgba(10, 10, 26, 0.85)",
-          border: "1px solid rgba(255, 255, 255, 0.12)",
-          backdropFilter: "blur(12px)",
+          backgroundColor: "rgba(5, 7, 17, 0.82)",
+          border: "1px solid rgba(0, 229, 255, 0.25)",
+          backdropFilter: "blur(14px)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           textAlign: "center",
-          boxShadow: "0 20px 40px rgba(0,0,0,0.6)",
+          boxShadow: "0 15px 35px rgba(0,0,0,0.7), 0 0 20px rgba(0, 229, 255, 0.15)",
           zIndex: 40,
         }}
       >
         <span
           style={{
             fontSize: isPortrait ? "22px" : "24px",
-            lineHeight: "1.4",
-            fontWeight: 500,
+            lineHeight: "1.35",
+            fontWeight: 600,
             color: "#f8fafc",
             textShadow: "0 2px 4px rgba(0,0,0,0.8)",
           }}
@@ -241,7 +224,7 @@ export const DynamicExplainer: React.FC<DynamicExplainerProps> = ({
   );
 };
 
-// ─── Component: Individual Section Slide ────────────────────────────────────
+// ─── Component: Individual Section Motion Canvas ───────────────────────────
 
 interface SectionSlideProps {
   section: DynamicSection;
@@ -260,168 +243,116 @@ const SectionSlide: React.FC<SectionSlideProps> = ({
   const { fps, width, height } = useVideoConfig();
   const isPortrait = height > width;
 
-  // Entrance spring animation
-  const enterScale = spring({
-    frame,
-    fps,
-    config: { damping: 14, mass: 0.6 },
-  });
+  // Extract punchy 3-6 word hero phrase from heading or first sentence
+  const heroPhrase = extractHeroPhrase(section.heading, section.text);
+  const accentWord = extractAccentWord(heroPhrase);
 
-  const cardOpacity = interpolate(frame, [0, 15], [0, 1], {
+  const badgeOpacity = interpolate(frame, [0, 10], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-
-  const floatY = interpolate(Math.sin(frame / 25), [-1, 1], [-6, 6]);
-
-  const bullets = section.bullets || splitIntoBullets(section.text);
 
   return (
     <div
       style={{
         flex: 1,
+        width: "100%",
+        height: "100%",
         display: "flex",
         flexDirection: isPortrait ? "column" : "row",
         alignItems: "center",
-        justifyContent: isPortrait ? "center" : "space-between",
+        justifyContent: "space-between",
         padding: isPortrait ? "130px 40px 260px 40px" : "90px 60px 110px 60px",
-        gap: isPortrait ? "24px" : "40px",
+        gap: isPortrait ? "28px" : "50px",
         zIndex: 20,
       }}
     >
-      {/* Left Column: Heading & Core Takeaways */}
+      {/* Visual Text Header with Kinetic Typography */}
       <div
         style={{
-          width: isPortrait ? "100%" : "560px",
-          maxWidth: isPortrait ? "960px" : "560px",
+          width: isPortrait ? "100%" : "520px",
+          maxWidth: isPortrait ? "960px" : "520px",
           display: "flex",
           flexDirection: "column",
-          gap: "12px",
+          alignItems: isPortrait ? "center" : "flex-start",
+          textAlign: isPortrait ? "center" : "left",
+          gap: "16px",
         }}
       >
-        {/* Section Step Badge */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", opacity: cardOpacity }}>
-          <div
-            style={{
-              padding: "6px 16px",
-              borderRadius: "30px",
-              backgroundColor: "rgba(56, 189, 248, 0.2)",
-              border: "1px solid rgba(56, 189, 248, 0.5)",
-              fontSize: "13px",
-              fontWeight: 800,
-              letterSpacing: "1px",
-              color: "#38bdf8",
-              textTransform: "uppercase",
-            }}
-          >
-            {section.badge || `Section ${sectionIndex + 1} of ${totalSections}`}
-          </div>
-        </div>
-
-        {/* Main Section Heading */}
-        <h1
+        {/* Floating Stage Indicator */}
+        <div
           style={{
-            fontSize: isPortrait ? "36px" : "42px",
-            fontWeight: 900,
-            lineHeight: "1.2",
-            margin: "0 0 6px 0",
-            background: "linear-gradient(135deg, #ffffff 40%, #38bdf8 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            transform: `scale(${enterScale}) translateY(${floatY}px)`,
+            opacity: badgeOpacity,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "6px 14px",
+            borderRadius: "30px",
+            backgroundColor: "rgba(0, 229, 255, 0.12)",
+            border: "1px solid rgba(0, 229, 255, 0.4)",
+            fontSize: "12px",
+            fontWeight: 800,
+            letterSpacing: "1.5px",
+            color: "#00e5ff",
+            textTransform: "uppercase",
           }}
         >
-          {section.heading}
-        </h1>
-
-        {/* Structured Insight Bullets */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          {bullets.slice(0, isPortrait ? 2 : 3).map((bullet, bIdx) => (
-            <div
-              key={bIdx}
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: "14px",
-                backgroundColor: "rgba(15, 23, 42, 0.75)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "14px",
-                padding: "12px 16px",
-                boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
-              }}
-            >
-              <div
-                style={{
-                  width: "26px",
-                  height: "26px",
-                  borderRadius: "8px",
-                  backgroundColor: "rgba(56, 189, 248, 0.2)",
-                  color: "#38bdf8",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: 800,
-                  fontSize: "13px",
-                  flexShrink: 0,
-                }}
-              >
-                {bIdx + 1}
-              </div>
-              <p style={{ margin: 0, fontSize: "15px", color: "#e2e8f0", lineHeight: "1.4", fontWeight: 400 }}>
-                {bullet}
-              </p>
-            </div>
-          ))}
+          <span>●</span>
+          <span>{section.badge || `STAGE 0${sectionIndex + 1} / 0${totalSections}`}</span>
         </div>
+
+        {/* Kinetic Hero Phrase */}
+        <KineticText
+          phrase={heroPhrase}
+          accentWords={[accentWord]}
+          fontSize={isPortrait ? 44 : 52}
+          alignment={isPortrait ? "center" : "left"}
+          accentColor="#00e5ff"
+        />
       </div>
 
-      {/* Right Column: Live Animated Mechanical/Technical Mechanism Viewport */}
-      <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", width: "100%" }}>
+      {/* Hero Visual Mechanism Viewport */}
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          width: "100%",
+        }}
+      >
         <VisualMechanismViewport
           topic={mainTitle}
           sectionIndex={sectionIndex}
           totalSections={totalSections}
           heading={section.heading}
           width={isPortrait ? 960 : 1140}
-          height={isPortrait ? 600 : 640}
+          height={isPortrait ? 660 : 640}
         />
       </div>
     </div>
   );
 };
 
-// ─── Component: Fallback Hero Slide ─────────────────────────────────────────
+// ─── Component: Fallback Hero Motion ────────────────────────────────────────
 
 const HeroSlide: React.FC<{ title: string; subtitle: string }> = ({ title, subtitle }) => {
-  const frame = useCurrentFrame();
-  const scale = spring({ frame, fps: 30, config: { damping: 12 } });
-
   return (
     <div
       style={{
         flex: 1,
+        width: "100%",
+        height: "100%",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         padding: "80px",
+        gap: "24px",
       }}
     >
-      <h1
-        style={{
-          fontSize: "64px",
-          fontWeight: 900,
-          textAlign: "center",
-          maxWidth: "1300px",
-          background: "linear-gradient(135deg, #ffffff 30%, #818cf8 100%)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          transform: `scale(${scale})`,
-        }}
-      >
-        {title}
-      </h1>
-      <p style={{ fontSize: "28px", color: "#94a3b8", marginTop: "24px", textAlign: "center" }}>
+      <KineticText phrase={title} fontSize={64} alignment="center" accentColor="#00e5ff" />
+      <p style={{ fontSize: "28px", color: "#94a3b8", textAlign: "center", maxWidth: "900px" }}>
         {subtitle}
       </p>
     </div>
@@ -439,17 +370,24 @@ function getCurrentSubtitleText(sections: DynamicSection[], currentFrame: number
   return "";
 }
 
-function splitIntoBullets(text: string): string[] {
-  if (!text) return [];
-  // Split on sentences
-  const sentences = text
-    .split(/(?<=[.!?])\s+/)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 10);
-
-  if (sentences.length <= 3) {
-    return sentences;
+function extractHeroPhrase(heading: string, text: string): string {
+  if (heading && heading.split(/\s+/).length <= 7) {
+    return heading;
   }
-  // Group into max 3 bullets
-  return [sentences[0], sentences[1], sentences.slice(2).join(" ")];
+  // Otherwise take the first 4-6 words of the first sentence
+  const firstSentence = (text || "").split(/[.!?]/)[0].trim();
+  const words = firstSentence.split(/\s+/).filter(Boolean);
+  if (words.length <= 6) {
+    return words.join(" ") || heading || "Key Principle";
+  }
+  return words.slice(0, 6).join(" ");
+}
+
+function extractAccentWord(phrase: string): string {
+  const words = phrase.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "";
+  // Pick the longest word as key accent
+  return words.reduce((longest, current) =>
+    current.length > longest.length ? current : longest, words[0]
+  );
 }

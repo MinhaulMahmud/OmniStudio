@@ -162,6 +162,41 @@ def validate_scene_code(code: str, file_path: Optional[Path] = None) -> list[Vio
                     snippet=line.strip()[:100],
                 ))
 
+    # 6. Anti-Slide Rule: Ban Bullet Lists (ul/ol/li)
+    bullet_list_pattern = re.compile(r"""<\s*(?:ul|ol|li)\b""", re.IGNORECASE)
+    for line_idx, line in enumerate(lines, start=1):
+        if bullet_list_pattern.search(line):
+            violations.append(Violation(
+                rule_id="ban_bullet_lists",
+                line=line_idx,
+                message="HTML list elements (ul/ol/li) are forbidden. Explainer videos use kinetic typography, not bullet lists.",
+                snippet=line.strip()[:100],
+            ))
+
+    # 7. Anti-Slide Rule: Ban Presentation Slide Cards
+    slide_card_pattern = re.compile(r"""background(?:Color)?\s*:\s*['"]rgba\(255,\s*255,\s*255,\s*0\.05\)['"]""", re.IGNORECASE)
+    for line_idx, line in enumerate(lines, start=1):
+        if slide_card_pattern.search(line):
+            violations.append(Violation(
+                rule_id="ban_presentation_boxes",
+                line=line_idx,
+                message="Static rectangular presentation card boxes are forbidden. Use full-bleed kinetic canvases or procedural motion primitives.",
+                snippet=line.strip()[:100],
+            ))
+
+    # 8. Anti-Slide Rule: Maximum on-screen words per block
+    text_block_pattern = re.compile(r"""<(?:p|span|h[1-6])(?:\s+[^>]*)?>([^<>{]+)<\/(?:p|span|h[1-6])>""", re.DOTALL)
+    for m in text_block_pattern.finditer(code):
+        text_content = m.group(1).strip()
+        words = [w for w in text_content.split() if len(w) > 1]
+        if len(words) > 12:
+            violations.append(Violation(
+                rule_id="max_on_screen_words",
+                line=1,
+                message=f"Text overlay contains {len(words)} words, exceeding limit (12 words). On-screen text is for punchy emphasis, not paragraphs.",
+                snippet=text_content[:80],
+            ))
+
     return violations
 
 

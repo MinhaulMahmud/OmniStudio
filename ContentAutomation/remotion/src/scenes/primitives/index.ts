@@ -7,3 +7,8 @@ export * from "./DiagramNodes";
 export * from "./Counter";
 export * from "./CaptionOverlay";
 export * from "./SceneContainer";
+export * from "./CinematicCamera";
+export * from "./DynamicBackdrop";
+export * from "./KineticText";
+export * from "./HUDTelemetry";
+export * from "./EnergyPulse";

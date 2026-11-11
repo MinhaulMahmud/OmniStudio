@@ -14,74 +14,81 @@ export interface BarChartProps {
   maxValue?: number;
   width?: number | string;
   delayFrames?: number;
+  layoutMode?: "landscape" | "portrait" | "square";
 }
 
 export const BarChart: React.FC<BarChartProps> = ({
   items,
   title,
   maxValue,
-  width = 900,
+  width,
   delayFrames = 10,
+  layoutMode = "landscape",
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
+  const isPortrait = layoutMode === "portrait";
+  const isSquare = layoutMode === "square";
+
+  const effectiveWidth = width || (isPortrait ? "900px" : isSquare ? "860px" : "1000px");
   const computedMax = maxValue || Math.max(...items.map((i) => i.value), 1);
 
   return (
     <div
       style={{
-        width,
+        width: "100%",
+        maxWidth: effectiveWidth,
         display: "flex",
         flexDirection: "column",
-        gap: "18px",
+        gap: isPortrait ? "14px" : "18px",
         backgroundColor: "rgba(15, 23, 42, 0.8)",
         border: "1px solid rgba(255, 255, 255, 0.1)",
         borderRadius: "20px",
-        padding: "28px 36px",
+        padding: isPortrait ? "20px 24px" : "28px 36px",
         boxShadow: "0 15px 35px rgba(0, 0, 0, 0.5)",
+        boxSizing: "border-box",
       }}
     >
       {title && (
-        <div style={{ fontSize: "20px", fontWeight: 800, color: "#f8fafc", marginBottom: "8px" }}>
+        <div style={{ fontSize: isPortrait ? "22px" : "20px", fontWeight: 800, color: "#f8fafc", marginBottom: "8px" }}>
           {title}
         </div>
       )}
       {items.map((item, idx) => {
-        const start = delayFrames + idx * Math.round(fps * 0.3);
-        const progress = interpolate(frame, [start, start + Math.round(fps * 0.6)], [0, 1], {
+        const itemDelay = delayFrames + idx * 8;
+        const progress = interpolate(frame, [itemDelay, itemDelay + Math.round(fps * 0.8)], [0, 1], {
           extrapolateLeft: "clamp",
           extrapolateRight: "clamp",
         });
 
-        const targetPercent = (item.value / computedMax) * 100;
-        const currentPercent = targetPercent * progress;
-        const barColor = item.color || (idx % 2 === 0 ? "#38bdf8" : "#818cf8");
+        const pct = Math.round((item.value / computedMax) * 100 * progress);
+        const barColor = item.color || "#38bdf8";
 
         return (
           <div key={idx} style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "16px", color: "#cbd5e1" }}>
-              <span style={{ fontWeight: 600 }}>{item.label}</span>
-              <span style={{ fontWeight: 700, color: barColor }}>
-                {item.formattedValue || item.value.toLocaleString()}
+            <div style={{ display: "flex", justifyContent: "space-between", color: "#e2e8f0", fontSize: isPortrait ? "18px" : "16px", fontWeight: 600 }}>
+              <span>{item.label}</span>
+              <span style={{ color: barColor, fontWeight: 700 }}>
+                {item.formattedValue || `${item.value}`}
               </span>
             </div>
             <div
               style={{
-                height: "16px",
-                backgroundColor: "rgba(255, 255, 255, 0.08)",
+                width: "100%",
+                height: isPortrait ? "18px" : "16px",
+                backgroundColor: "#1e293b",
                 borderRadius: "8px",
                 overflow: "hidden",
-                position: "relative",
               }}
             >
               <div
                 style={{
+                  width: `${pct}%`,
                   height: "100%",
-                  width: `${currentPercent}%`,
                   backgroundColor: barColor,
                   borderRadius: "8px",
-                  boxShadow: `0 0 12px ${barColor}88`,
+                  boxShadow: `0 0 12px ${barColor}66`,
                 }}
               />
             </div>

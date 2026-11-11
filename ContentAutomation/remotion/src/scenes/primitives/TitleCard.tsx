@@ -6,6 +6,7 @@ export interface TitleCardProps {
   subtitle?: string;
   badge?: string;
   accentColor?: string;
+  layoutMode?: "landscape" | "portrait" | "square";
 }
 
 export const TitleCard: React.FC<TitleCardProps> = ({
@@ -13,6 +14,7 @@ export const TitleCard: React.FC<TitleCardProps> = ({
   subtitle,
   badge = "TECHNICAL EXPLAINER",
   accentColor = "#38bdf8",
+  layoutMode = "landscape",
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -28,6 +30,18 @@ export const TitleCard: React.FC<TitleCardProps> = ({
     extrapolateRight: "clamp",
   });
 
+  const isPortrait = layoutMode === "portrait";
+  const isSquare = layoutMode === "square";
+
+  const titleFontSize = isPortrait
+    ? (title.length > 50 ? "42px" : title.length > 30 ? "52px" : "62px")
+    : isSquare
+    ? (title.length > 50 ? "40px" : "48px")
+    : (title.length > 50 ? "58px" : "72px");
+
+  const subtitleFontSize = isPortrait ? "28px" : isSquare ? "26px" : "32px";
+  const maxWidth = isPortrait ? "900px" : isSquare ? "860px" : "1500px";
+
   return (
     <div
       style={{
@@ -36,8 +50,11 @@ export const TitleCard: React.FC<TitleCardProps> = ({
         alignItems: "center",
         justifyContent: "center",
         textAlign: "center",
-        padding: "40px 60px",
+        maxWidth,
+        width: "100%",
+        padding: isPortrait ? "10px 20px" : "20px 40px",
         opacity,
+        boxSizing: "border-box",
       }}
     >
       {badge && (
@@ -48,11 +65,12 @@ export const TitleCard: React.FC<TitleCardProps> = ({
             backgroundColor: `${accentColor}22`,
             border: `1px solid ${accentColor}66`,
             color: accentColor,
-            fontSize: "14px",
-            fontWeight: 800,
+            fontSize: isPortrait ? "18px" : "20px",
+            fontWeight: 700,
             letterSpacing: "2px",
             textTransform: "uppercase",
-            marginBottom: "16px",
+            marginBottom: isPortrait ? "16px" : "24px",
+            display: "inline-block",
           }}
         >
           {badge}
@@ -60,16 +78,16 @@ export const TitleCard: React.FC<TitleCardProps> = ({
       )}
       <h1
         style={{
-          fontSize: "56px",
+          fontSize: titleFontSize,
           fontWeight: 900,
-          margin: "0 0 16px 0",
+          color: "#f8fafc",
+          margin: 0,
           lineHeight: 1.15,
-          maxWidth: "1400px",
+          letterSpacing: "-1px",
           transform: `scale(${scale})`,
-          background: "linear-gradient(135deg, #ffffff 40%, #c7d2fe 100%)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          textShadow: `0 0 40px ${accentColor}44`,
+          textShadow: "0 4px 24px rgba(0,0,0,0.7)",
+          overflowWrap: "break-word",
+          wordBreak: "break-word",
         }}
       >
         {title}
@@ -77,11 +95,14 @@ export const TitleCard: React.FC<TitleCardProps> = ({
       {subtitle && (
         <p
           style={{
-            fontSize: "24px",
+            fontSize: subtitleFontSize,
+            fontWeight: 400,
             color: "#94a3b8",
-            maxWidth: "900px",
-            margin: 0,
+            marginTop: isPortrait ? "12px" : "18px",
+            marginBottom: 0,
+            maxWidth: isPortrait ? "840px" : "1100px",
             lineHeight: 1.4,
+            overflowWrap: "break-word",
           }}
         >
           {subtitle}

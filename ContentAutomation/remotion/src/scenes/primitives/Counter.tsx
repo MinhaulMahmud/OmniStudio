@@ -10,6 +10,7 @@ export interface CounterProps {
   accentColor?: string;
   durationFrames?: number;
   subtext?: string;
+  layoutMode?: "landscape" | "portrait" | "square";
 }
 
 export const Counter: React.FC<CounterProps> = ({
@@ -21,9 +22,13 @@ export const Counter: React.FC<CounterProps> = ({
   accentColor = "#38bdf8",
   durationFrames,
   subtext,
+  layoutMode = "landscape",
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+
+  const isPortrait = layoutMode === "portrait";
+  const isSquare = layoutMode === "square";
 
   const totalDuration = durationFrames || Math.round(fps * 2.0);
 
@@ -34,6 +39,9 @@ export const Counter: React.FC<CounterProps> = ({
     })
   );
 
+  const numberFontSize = isPortrait ? "56px" : isSquare ? "50px" : "64px";
+  const labelFontSize = isPortrait ? "20px" : isSquare ? "18px" : "20px";
+
   return (
     <div
       style={{
@@ -41,41 +49,49 @@ export const Counter: React.FC<CounterProps> = ({
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "rgba(15, 23, 42, 0.85)",
-        border: `1.5px solid ${accentColor}66`,
-        borderRadius: "24px",
-        padding: "32px 50px",
-        boxShadow: `0 10px 30px rgba(0,0,0,0.5), 0 0 30px ${accentColor}22`,
-        textAlign: "center",
+        backgroundColor: "rgba(15, 23, 42, 0.8)",
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        borderRadius: "20px",
+        padding: isPortrait ? "24px 32px" : "28px 40px",
+        boxShadow: "0 15px 35px rgba(0, 0, 0, 0.5)",
+        minWidth: isPortrait ? "220px" : "240px",
+        boxSizing: "border-box",
       }}
     >
       <div
         style={{
-          fontSize: "14px",
-          fontWeight: 800,
-          color: accentColor,
-          letterSpacing: "2px",
-          textTransform: "uppercase",
-          marginBottom: "10px",
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          fontSize: "64px",
+          fontSize: numberFontSize,
           fontWeight: 900,
+          color: accentColor,
+          lineHeight: 1,
           fontFamily: "monospace",
-          color: "#ffffff",
-          letterSpacing: "1px",
+          textShadow: `0 0 30px ${accentColor}44`,
         }}
       >
         {prefix}
         {currentValue.toLocaleString()}
-        {unit && <span style={{ fontSize: "36px", color: accentColor, marginLeft: "6px" }}>{unit}</span>}
+        {unit}
+      </div>
+      <div
+        style={{
+          fontSize: labelFontSize,
+          fontWeight: 700,
+          color: "#f8fafc",
+          marginTop: "12px",
+          textAlign: "center",
+        }}
+      >
+        {label}
       </div>
       {subtext && (
-        <div style={{ fontSize: "16px", color: "#94a3b8", marginTop: "8px" }}>
+        <div
+          style={{
+            fontSize: "14px",
+            color: "#94a3b8",
+            marginTop: "6px",
+            textAlign: "center",
+          }}
+        >
           {subtext}
         </div>
       )}

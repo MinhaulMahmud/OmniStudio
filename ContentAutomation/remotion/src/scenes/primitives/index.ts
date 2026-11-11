@@ -6,3 +6,4 @@ export * from "./Timeline";
 export * from "./DiagramNodes";
 export * from "./Counter";
 export * from "./CaptionOverlay";
+export * from "./SceneContainer";

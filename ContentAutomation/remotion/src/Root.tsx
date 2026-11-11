@@ -43,9 +43,11 @@ export const Root: React.FC = () => {
         width={1920}
         height={1080}
         calculateMetadata={({ props }) => {
-          const typedProps = props as DynamicExplainerProps;
+          const typedProps = props as any;
           return {
-            durationInFrames: typedProps.totalFrames || 1800,
+            durationInFrames: typedProps?.totalFrames || 1800,
+            width: typedProps?.width || 1920,
+            height: typedProps?.height || 1080,
           };
         }}
         defaultProps={{
@@ -70,6 +72,8 @@ export const Root: React.FC = () => {
           const typedProps = props as any;
           return {
             durationInFrames: typedProps?.totalFrames || 1800,
+            width: typedProps?.width || 1920,
+            height: typedProps?.height || 1080,
           };
         }}
         defaultProps={{

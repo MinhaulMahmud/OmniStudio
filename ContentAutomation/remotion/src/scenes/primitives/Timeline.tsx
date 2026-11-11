@@ -12,32 +12,120 @@ export interface TimelineProps {
   activeStep?: number;
   accentColor?: string;
   width?: number | string;
+  layoutMode?: "landscape" | "portrait" | "square";
 }
 
 export const Timeline: React.FC<TimelineProps> = ({
   steps,
   activeStep,
   accentColor = "#38bdf8",
-  width = 950,
+  width,
+  layoutMode = "landscape",
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // If activeStep not provided, calculate from frame
+  const isPortrait = layoutMode === "portrait";
+  const isSquare = layoutMode === "square";
+
   const currentStep =
     activeStep !== undefined
       ? activeStep
       : Math.min(steps.length - 1, Math.floor(frame / Math.max(1, Math.round(fps * 2.0))));
 
+  if (isPortrait) {
+    // Clean Vertical Stepper for Mobile Viewports
+    const effectiveWidth = width || "900px";
+    return (
+      <div
+        style={{
+          width: "100%",
+          maxWidth: effectiveWidth,
+          display: "flex",
+          flexDirection: "column",
+          gap: "18px",
+          padding: "10px 20px",
+          position: "relative",
+          boxSizing: "border-box",
+        }}
+      >
+        {steps.map((step, idx) => {
+          const isActive = idx <= currentStep;
+          const isCurrent = idx === currentStep;
+          return (
+            <div
+              key={idx}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "18px",
+                padding: "14px 20px",
+                borderRadius: "16px",
+                backgroundColor: isCurrent ? "rgba(56, 189, 248, 0.15)" : "rgba(15, 23, 42, 0.7)",
+                border: isCurrent ? `1.5px solid ${accentColor}` : "1px solid rgba(148, 163, 184, 0.15)",
+                boxShadow: isCurrent ? `0 0 25px ${accentColor}33` : "none",
+                transition: "all 0.3s ease",
+              }}
+            >
+              <div
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "50%",
+                  backgroundColor: isActive ? accentColor : "#1e293b",
+                  color: isActive ? "#060913" : "#64748b",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: 900,
+                  fontSize: "18px",
+                  flexShrink: 0,
+                }}
+              >
+                {idx + 1}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <div
+                  style={{
+                    color: isActive ? "#f8fafc" : "#94a3b8",
+                    fontSize: "22px",
+                    fontWeight: 700,
+                  }}
+                >
+                  {step.title}
+                </div>
+                {step.description && (
+                  <div
+                    style={{
+                      color: "#64748b",
+                      fontSize: "18px",
+                      fontWeight: 400,
+                    }}
+                  >
+                    {step.description}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Horizontal Timeline for Landscape / Square Viewports
+  const effectiveWidth = width || (isSquare ? "860px" : "1100px");
   return (
     <div
       style={{
-        width,
+        width: "100%",
+        maxWidth: effectiveWidth,
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         position: "relative",
         padding: "30px 20px",
+        boxSizing: "border-box",
       }}
     >
       {/* Background Connecting Line */}
@@ -48,26 +136,28 @@ export const Timeline: React.FC<TimelineProps> = ({
           left: "60px",
           right: "60px",
           height: "4px",
-          backgroundColor: "rgba(255, 255, 255, 0.12)",
-          borderRadius: "2px",
+          backgroundColor: "#1e293b",
           zIndex: 0,
         }}
-      >
-        {/* Animated Active Progress Line */}
-        <div
-          style={{
-            height: "100%",
-            width: `${(currentStep / Math.max(1, steps.length - 1)) * 100}%`,
-            backgroundColor: accentColor,
-            boxShadow: `0 0 12px ${accentColor}`,
-            transition: "width 0.3s ease",
-          }}
-        />
-      </div>
+      />
+
+      {/* Animated Active Progress Line */}
+      <div
+        style={{
+          position: "absolute",
+          top: "45px",
+          left: "60px",
+          width: `${Math.min(100, (currentStep / Math.max(1, steps.length - 1)) * 100)}%`,
+          height: "4px",
+          backgroundColor: accentColor,
+          boxShadow: `0 0 16px ${accentColor}`,
+          zIndex: 1,
+        }}
+      />
 
       {steps.map((step, idx) => {
-        const isActive = idx === currentStep;
-        const isPast = idx < currentStep;
+        const isActive = idx <= currentStep;
+        const isCurrent = idx === currentStep;
 
         return (
           <div
@@ -77,51 +167,45 @@ export const Timeline: React.FC<TimelineProps> = ({
               flexDirection: "column",
               alignItems: "center",
               textAlign: "center",
-              zIndex: 1,
-              width: `${100 / steps.length}%`,
+              zIndex: 2,
+              width: "180px",
             }}
           >
-            {/* Step Node Circle */}
             <div
               style={{
-                width: isActive ? "42px" : "32px",
-                height: isActive ? "42px" : "32px",
+                width: isCurrent ? "44px" : "36px",
+                height: isCurrent ? "44px" : "36px",
                 borderRadius: "50%",
-                backgroundColor: isActive || isPast ? accentColor : "#1e293b",
-                border: `3px solid ${isActive ? "#ffffff" : isPast ? accentColor : "rgba(255,255,255,0.2)"}`,
-                color: isActive || isPast ? "#0f172a" : "#94a3b8",
+                backgroundColor: isActive ? accentColor : "#0f172a",
+                border: `3px solid ${isActive ? accentColor : "#334155"}`,
+                boxShadow: isCurrent ? `0 0 24px ${accentColor}` : "none",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontWeight: 800,
-                fontSize: isActive ? "16px" : "13px",
-                boxShadow: isActive ? `0 0 20px ${accentColor}` : "none",
-                marginBottom: "14px",
-                transition: "all 0.2s ease",
+                color: isActive ? "#060913" : "#64748b",
+                fontWeight: 900,
+                fontSize: "18px",
+                marginBottom: "12px",
               }}
             >
               {idx + 1}
             </div>
-
-            {/* Step Title */}
             <div
               style={{
-                fontSize: isActive ? "18px" : "15px",
-                fontWeight: isActive ? 800 : 600,
-                color: isActive ? "#ffffff" : isPast ? "#cbd5e1" : "#64748b",
+                color: isActive ? "#f8fafc" : "#64748b",
+                fontSize: "20px",
+                fontWeight: 700,
                 marginBottom: "4px",
+                lineHeight: 1.2,
               }}
             >
               {step.title}
             </div>
-
-            {/* Description */}
             {step.description && (
               <div
                 style={{
-                  fontSize: "13px",
-                  color: isActive ? "#94a3b8" : "#475569",
-                  maxWidth: "140px",
+                  color: "#94a3b8",
+                  fontSize: "14px",
                   lineHeight: 1.3,
                 }}
               >

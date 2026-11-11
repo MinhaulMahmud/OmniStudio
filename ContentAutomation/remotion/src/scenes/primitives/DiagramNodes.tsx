@@ -22,25 +22,34 @@ export interface DiagramNodesProps {
   width?: number | string;
   height?: number;
   title?: string;
+  layoutMode?: "landscape" | "portrait" | "square";
 }
 
 export const DiagramNodes: React.FC<DiagramNodesProps> = ({
   nodes,
   edges = [],
-  width = 900,
-  height = 420,
+  width,
+  height,
   title,
+  layoutMode = "landscape",
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+
+  const isPortrait = layoutMode === "portrait";
+  const isSquare = layoutMode === "square";
+
+  const effectiveWidth = width || (isPortrait ? "900px" : isSquare ? "860px" : "1000px");
+  const effectiveHeight = height || (isPortrait ? 500 : isSquare ? 420 : 420);
 
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 
   return (
     <div
       style={{
-        width,
-        height,
+        width: "100%",
+        maxWidth: effectiveWidth,
+        height: effectiveHeight,
         backgroundColor: "rgba(11, 15, 25, 0.9)",
         border: "1px solid rgba(255, 255, 255, 0.1)",
         borderRadius: "20px",
@@ -48,100 +57,128 @@ export const DiagramNodes: React.FC<DiagramNodesProps> = ({
         boxShadow: "0 15px 35px rgba(0, 0, 0, 0.6)",
         position: "relative",
         overflow: "hidden",
+        boxSizing: "border-box",
       }}
     >
       {title && (
-        <div style={{ fontSize: "16px", fontWeight: 800, color: "#94a3b8", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "8px" }}>
+        <div
+          style={{
+            color: "#38bdf8",
+            fontSize: isPortrait ? "20px" : "18px",
+            fontWeight: 800,
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+            marginBottom: "10px",
+          }}
+        >
           {title}
         </div>
       )}
-      <svg viewBox="0 0 1000 500" style={{ width: "100%", height: "100%" }}>
+
+      {/* SVG Connecting Edges */}
+      <svg
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          pointerEvents: "none",
+        }}
+      >
         <defs>
-          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-            <path d="M 0 1 L 9 5 L 0 9 z" fill="#38bdf8" />
+          <marker
+            id="arrow"
+            viewBox="0 0 10 10"
+            refX="6"
+            refY="5"
+            markerWidth="6"
+            markerHeight="6"
+            orient="auto-start-reverse"
+          >
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
           </marker>
         </defs>
 
-        {/* Connecting Edges */}
-        {edges.map((edge, idx) => {
+        {edges.map((edge, i) => {
           const fromNode = nodeMap.get(edge.from);
           const toNode = nodeMap.get(edge.to);
           if (!fromNode || !toNode) return null;
 
-          const x1 = (fromNode.x / 100) * 1000;
-          const y1 = (fromNode.y / 100) * 500;
-          const x2 = (toNode.x / 100) * 1000;
-          const y2 = (toNode.y / 100) * 500;
-
-          const pulseOffset = (frame * 5 + idx * 30) % 100;
-
           return (
-            <g key={idx}>
-              <line
-                x1={x1}
-                y1={y1}
-                x2={x2}
-                y2={y2}
-                stroke="rgba(56, 189, 248, 0.3)"
-                strokeWidth="2.5"
-                strokeDasharray="6 4"
-                markerEnd="url(#arrow)"
-              />
-              {/* Animated Signal Particle */}
-              <circle
-                cx={x1 + ((x2 - x1) * pulseOffset) / 100}
-                cy={y1 + ((y2 - y1) * pulseOffset) / 100}
-                r="4"
-                fill="#38bdf8"
-                filter="drop-shadow(0 0 6px #38bdf8)"
-              />
-            </g>
-          );
-        })}
-
-        {/* Nodes */}
-        {nodes.map((node, idx) => {
-          const nx = (node.x / 100) * 1000;
-          const ny = (node.y / 100) * 500;
-          const nodeColor = node.color || "#38bdf8";
-
-          const nodeScale = interpolate(frame, [idx * 8, idx * 8 + 15], [0, 1], {
-            extrapolateLeft: "clamp",
-            extrapolateRight: "clamp",
-          });
-
-          return (
-            <g key={node.id} transform={`translate(${nx}, ${ny}) scale(${nodeScale})`}>
-              <rect
-                x="-85"
-                y="-35"
-                width="170"
-                height="70"
-                rx="14"
-                fill="#0f172a"
-                stroke={nodeColor}
-                strokeWidth="2"
-                filter="drop-shadow(0 4px 12px rgba(0,0,0,0.5))"
-              />
-              <text
-                x="0"
-                y={node.sub ? "-4" : "6"}
-                textAnchor="middle"
-                fill="#ffffff"
-                fontSize="15"
-                fontWeight="700"
-              >
-                {node.label}
-              </text>
-              {node.sub && (
-                <text x="0" y="16" textAnchor="middle" fill="#94a3b8" fontSize="12">
-                  {node.sub}
-                </text>
-              )}
-            </g>
+            <line
+              key={i}
+              x1={`${fromNode.x}%`}
+              y1={`${fromNode.y}%`}
+              x2={`${toNode.x}%`}
+              y2={`${toNode.y}%`}
+              stroke="#38bdf8"
+              strokeWidth="2.5"
+              strokeDasharray="6 4"
+              opacity="0.75"
+              markerEnd="url(#arrow)"
+            />
           );
         })}
       </svg>
+
+      {/* Nodes */}
+      {nodes.map((node, i) => {
+        const nodeColor = node.color || "#38bdf8";
+        const delay = i * 6;
+        const opacity = interpolate(frame, [delay, delay + 15], [0, 1], {
+          extrapolateLeft: "clamp",
+          extrapolateRight: "clamp",
+        });
+
+        return (
+          <div
+            key={node.id}
+            style={{
+              position: "absolute",
+              left: `${node.x}%`,
+              top: `${node.y}%`,
+              transform: "translate(-50%, -50%)",
+              backgroundColor: "rgba(15, 23, 42, 0.95)",
+              border: `2px solid ${nodeColor}`,
+              borderRadius: "14px",
+              padding: isPortrait ? "10px 16px" : "8px 16px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              boxShadow: `0 0 20px ${nodeColor}33`,
+              opacity,
+              zIndex: 2,
+              minWidth: isPortrait ? "120px" : "100px",
+            }}
+          >
+            <span
+              style={{
+                color: "#f8fafc",
+                fontSize: isPortrait ? "16px" : "15px",
+                fontWeight: 700,
+                textAlign: "center",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {node.label}
+            </span>
+            {node.sub && (
+              <span
+                style={{
+                  color: "#94a3b8",
+                  fontSize: isPortrait ? "13px" : "12px",
+                  marginTop: "2px",
+                  textAlign: "center",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {node.sub}
+              </span>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };

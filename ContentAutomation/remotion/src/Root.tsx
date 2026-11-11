@@ -3,6 +3,7 @@ import { Composition } from "remotion";
 import { ModelWeightsComposition } from "./ModelWeightsComposition";
 import { BikeGearboxComposition } from "./BikeGearboxComposition";
 import { DynamicExplainer, DynamicExplainerProps } from "./DynamicExplainer";
+import { DynamicTopicScene } from "./scenes/generated/DynamicTopicScene";
 
 export const Root: React.FC = () => {
   return (
@@ -33,7 +34,7 @@ export const Root: React.FC = () => {
         }}
       />
 
-      {/* 3. Generic Dynamic Explainer for ANY Topic / Script */}
+      {/* 3. Universal Split-Screen Explainer */}
       <Composition
         id="DynamicExplainer"
         component={DynamicExplainer}
@@ -54,6 +55,28 @@ export const Root: React.FC = () => {
           sections: [],
           totalFrames: 1800,
           audioFile: "narration.mp3",
+        }}
+      />
+
+      {/* 4. Autonomous AI-Synthesized Topic Scene */}
+      <Composition
+        id="DynamicTopicScene"
+        component={DynamicTopicScene}
+        durationInFrames={1800}
+        fps={30}
+        width={1920}
+        height={1080}
+        calculateMetadata={({ props }) => {
+          const typedProps = props as any;
+          return {
+            durationInFrames: typedProps?.totalFrames || 1800,
+          };
+        }}
+        defaultProps={{
+          title: "Autonomous Explainer",
+          subtitle: "AI Generated Remotion Scene",
+          sections: [],
+          totalFrames: 1800,
         }}
       />
     </>

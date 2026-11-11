@@ -69,7 +69,7 @@ def test_explicit_voice_model_kittentts():
 # ─── 2. VoiceStudioClient Payload & Settings Tests ───────────────────────────
 
 def test_synthesize_single_chunk_payload_defaults():
-    """Payload to /v1/audio/speech must include default audio_quality (standard), refinement (19), even_out_volume (True)."""
+    """Payload to /v1/audio/speech must include default audio_quality (original), refinement (19), even_out_volume (True)."""
     client = VoiceStudioClient()
     mock_resp = MagicMock()
     mock_resp.iter_content.return_value = [b"dummy audio data " * 100]
@@ -86,9 +86,41 @@ def test_synthesize_single_chunk_payload_defaults():
         assert out is not None
         assert mock_post.called
         payload = mock_post.call_args[1]["json"]
-        assert payload["audio_quality"] == "standard"
+        assert payload["audio_quality"] == "original"
         assert payload["refinement"] == 19
         assert payload["even_out_volume"] is True
+
+
+def test_three_audio_quality_categories():
+    """Verify all 3 audio quality categories: standard, for editing / editing, and original."""
+    client = VoiceStudioClient()
+    mock_chunk_path = Path("fake_chunk.wav")
+
+    categories_and_expected_codecs = [
+        ("standard", "pcm_s16le"),
+        ("editing", "pcm_s24le"),
+        ("for editing", "pcm_s24le"),
+        ("original", "pcm_f32le"),
+    ]
+
+    for quality_input, expected_codec in categories_and_expected_codecs:
+        with patch.object(client, "synthesize_single_chunk", return_value=mock_chunk_path), \
+             patch.object(client, "verify_audio", return_value=2.0), \
+             patch("subprocess.run") as mock_subproc:
+            mock_subproc.return_value = MagicMock(returncode=0, stderr="")
+
+            client.synthesize_chunked(
+                text_or_chunks=["Quality test."],
+                output_path=Path("out.wav"),
+                audio_format="wav",
+                audio_quality=quality_input,
+                even_out_volume=False,
+            )
+
+            concat_call = [call for call in mock_subproc.call_args_list if "-filter_complex" in call[0][0]]
+            assert len(concat_call) >= 1
+            cmd = concat_call[0][0][0]
+            assert expected_codec in cmd
 
 
 def test_synthesize_single_chunk_payload_custom():

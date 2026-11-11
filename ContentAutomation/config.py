@@ -51,8 +51,8 @@ TTS_FORMAT = "mp3"
 TTS_SPEED = 1.0   # 0.25 – 4.0
 
 # Advanced VoiceStudio Audio Settings
-# Audio Quality: "standard" (16-bit PCM), "editing" (24-bit PCM), "original" (32-bit float)
-DEFAULT_AUDIO_QUALITY = os.getenv("TTS_AUDIO_QUALITY", "standard")
+# Audio Quality: "standard" (16-bit PCM), "editing" / "for editing" (24-bit PCM), "original" (32-bit float)
+DEFAULT_AUDIO_QUALITY = os.getenv("TTS_AUDIO_QUALITY", "original")
 # Voice Refinement: integer passes (default 19; fewer passes lower quality, more take longer)
 DEFAULT_VOICE_REFINEMENT = int(os.getenv("TTS_VOICE_REFINEMENT", "19"))
 # Even Out Volume: balance loudness and consistency across audio chunks (default True)

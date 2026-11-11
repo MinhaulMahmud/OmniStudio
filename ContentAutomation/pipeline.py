@@ -596,8 +596,8 @@ Examples:
     parser.add_argument("--voice-id", help="VoiceStudio voice ID to use")
     parser.add_argument("--voice-name", "--voice", help="VoiceStudio voice name to use (e.g. 'expr-voice-2-m', 'minhaz', 'Alloy')")
     parser.add_argument("--audio-quality", default=DEFAULT_AUDIO_QUALITY,
-                        choices=["standard", "editing", "original"],
-                        help="Audio quality / bit depth: 'standard' (16-bit PCM), 'editing' (24-bit PCM), 'original' (32-bit float). Default: standard.")
+                        choices=["standard", "editing", "for editing", "original"],
+                        help="Audio quality / bit depth: 'standard' (16-bit PCM), 'for editing' / 'editing' (24-bit PCM), 'original' (32-bit float). Default: original.")
     parser.add_argument("--voice-refinement", "--refinement", type=int, default=DEFAULT_VOICE_REFINEMENT,
                         help="Voice refinement iterations/passes (1-50, default: 19). Fewer passes lower quality; more take longer.")
     parser.add_argument("--even-out-volume", dest="even_out_volume", action="store_true", default=DEFAULT_EVEN_OUT_VOLUME,

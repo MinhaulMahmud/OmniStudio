@@ -1,30 +1,34 @@
-# 🎬 Content Automation — Voice-Cloned Video Creator
+# 🎬 Content Automation — Autonomous AI Video & Motion Graphics Engine
 
 An end-to-end content automation pipeline that:
-1. **Researches** trending topics using `yt-dlp` (YouTube, TikTok, Instagram)
-2. **Writes scripts** using an LLM (OpenAI GPT or Google Gemini)
-3. **Synthesizes narration** with your **cloned voice** from VoiceStudio
-4. **Generates subtitles** (SRT, WebVTT, ASS)
-5. **Composes videos** in multiple formats (YouTube 16:9, Shorts/TikTok 9:16)
+1. **Researches** trending topics & extracts **spoken video transcripts** using `yt-dlp` (YouTube, Shorts, TikTok)
+2. **Writes technical scripts** using **Llama 3.3 70B** (via OpenRouter or Omniroute 1.6B token proxy)
+3. **Synthesizes studio voiceover** using **KittenTTS** or **OmniVoice cloned voices** (with 32-bit float original quality, refinement passes, and EBU R128 volume leveling)
+4. **Renders direct React motion graphics** via **Remotion** (turbofan jet engines, engine cutaways, constant-mesh gearboxes, compute matrices, TopoJSON maps, and floating telemetry HUDs)
+5. **Generates synchronized subtitles** (ASS karaoke, SRT, WebVTT)
+6. **Composes final videos** across multiple aspect ratios (16:9 Landscape, 9:16 Vertical, 1:1 Square, 4:5 Portrait)
 
 ## 🏗️ Architecture
 
 ```
 ContentAutomation/
-├── main.py               ← CLI entry point
-├── pipeline.py           ← Full orchestration pipeline
-├── config.py             ← All configuration settings
-├── researcher.py         ← yt-dlp trend research engine
-├── script_generator.py   ← LLM script writing (OpenAI/Gemini)
-├── voice_client.py       ← VoiceStudio TTS client
-├── subtitle_generator.py ← SRT/VTT/ASS subtitle generation
-├── video_composer.py     ← FFmpeg video assembly
-├── background_manager.py ← Stock background asset manager
-├── composition_plan.py   ← Remotion-style composition plans
-├── scheduler.py          ← Automated content scheduling
-├── output/               ← Generated videos, audio, scripts
-├── assets/backgrounds/   ← Background videos/images
-└── logs/                 ← Run logs and research data
+├── pipeline.py                    ← Master orchestrator pipeline
+├── config.py                      ← Central configuration & audio defaults
+├── researcher.py                  ← yt-dlp competitor metadata & spoken transcript extractor
+├── topic_intelligence.py          ← AI typo corrector & search grounding agent
+├── script_generator.py            ← OpenRouter Llama 3.3 70B visual storyboard generator
+├── autonomous_voice_router.py     ← Smart voice & engine router (KittenTTS / OmniVoice)
+├── voice_client.py                ← VoiceStudio client (32-bit float, refinement, volume leveling)
+├── remotion_renderer.py           ← Remotion CLI Node.js renderer with dynamic props
+├── video_composer.py              ← FFmpeg multi-format compositor & subtitle burning
+├── subtitle_generator.py          ← Word-level subtitle generator (ASS/SRT/VTT)
+├── platform_profiles.py           ← Platform safe zones, layout modes, duration budgeting
+├── remotion/                      ← Remotion React motion graphics project
+│   └── src/
+│       ├── DynamicExplainer.tsx   ← Core multi-layer motion graphics canvas
+│       └── components/            ← TurbofanJetMechanism, VisualMechanismViewport, etc.
+├── tests/                         ← Automated test suite (66 unit tests)
+└── output/                        ← Delivered MP4 videos, scripts, audio & subtitles
 ```
 
 ## ⚡ Quick Start
@@ -33,61 +37,31 @@ ContentAutomation/
 
 | Tool | Required | How to Get |
 |------|----------|-----------|
-| VoiceStudio | ✅ Yes | Already installed at `E:\Omniroute\openstudio\VoiceStudio` |
-| Python 3.11+ | ✅ Yes | Already installed |
-| yt-dlp | ✅ Yes | Already installed (`pip install yt-dlp`) |
-| FFmpeg | ✅ For video | [Download](https://ffmpeg.org/download.html) → add to PATH |
-| OpenAI API key | Recommended | [platform.openai.com](https://platform.openai.com) |
+| VoiceStudio | ✅ Yes | Local app running at `http://localhost:3900` |
+| Python 3.11+ | ✅ Yes | Installed in environment |
+| Node.js 18+ | ✅ Yes | Required for Remotion rendering |
+| yt-dlp | ✅ Yes | Included in `requirements.txt` |
+| FFmpeg | ✅ Yes | Installed and in system PATH |
+| OpenRouter API key | Recommended | Set `OPENROUTER_API_KEY` in `.env` |
 
-### Setup
+### Running the Pipeline
 
-1. **Configure your environment:**
-   ```powershell
-   cd E:\Omniroute\openstudio\ContentAutomation
-   copy .env.example .env
-   # Edit .env with your API keys and voice settings
-   ```
-
-2. **Start VoiceStudio** — open the VoiceStudio app and make sure your cloned voice is ready.
-
-3. **Check system status:**
-   ```powershell
-   python main.py status
-   ```
-
-4. **List your cloned voices:**
-   ```powershell
-   python main.py list-voices
-   ```
-
-5. **Set your voice** in `config.py` or `.env`:
-   ```
-   CLONED_VOICE_NAME=My Voice Name
-   ```
-
-## 🚀 Usage
-
-### Full Pipeline (Research → Script → Voice → Video)
 ```powershell
-# Generate a YouTube video on a topic
-python main.py run --topic "AI productivity tools 2026"
+# 1. Jet Propulsion explainer for YouTube Shorts (9:16 Vertical)
+python pipeline.py --topic "Jet Propulsion Basics" --ratio 9:16
 
-# Specific platform
-python main.py run --topic "Python one-liners" --platform shorts
+# 2. Mechanical Gearbox explainer with explicit 60-second duration budget (16:9 Landscape)
+python pipeline.py --topic "how bike gearbox works" --ratio 16:9 --duration 60
 
-# Multiple topics
-python main.py run --topics "AI tools,ChatGPT tips,Python 2026"
+# 3. AI Model Weights explainer with your cloned voice and studio editing quality
+python pipeline.py --topic "AI model weights" --voice-name Minhaz --audio-quality editing
 
-# Use your specific voice
-python main.py run --topic "Tech news" --voice-name "My Voice"
+# 4. List available voices in VoiceStudio
+python pipeline.py --list-voices
 
-# Generate both YouTube and Shorts formats
-python main.py run --topic "AI tips" --formats youtube,shorts
+# 5. Run automated test suite
+python -m pytest tests/
 ```
-
-### Individual Steps
-
-```powershell
 # Research only
 python main.py research --topics "AI tools,productivity"
 

@@ -73,35 +73,35 @@ The following diagram illustrates how raw user input flows through the 6 autonom
 flowchart TD
     User([User Prompt / Topic]) --> Stage1[Stage 1: Topic Intelligence Agent]
 
-    subgraph S1["1. Topic Intelligence & Dual Research Engine"]
+    subgraph S1["1. Topic Intelligence, Subtitles & Spoken Transcript Analysis"]
         Stage1 --> PreSearch[DuckDuckGo / Wikipedia Grounding]
         PreSearch --> TypoCheck{Typo / Anomaly Detected?}
         TypoCheck -- Yes --> Correct[AI Normalization & Canonization]
         TypoCheck -- No --> Canon[Canonical Topic & Keywords]
         Correct & Canon --> ConcurrentExec[Concurrent Dual Research ThreadPool]
-        ConcurrentExec --> YTSource[YouTube Metadata yt-dlp]
+        ConcurrentExec --> YTSource[YouTube Metadata & Subtitle Tracks yt-dlp]
         ConcurrentExec --> WebSource[Web Search: DuckDuckGo + Wikipedia + arXiv]
-        YTSource & WebSource --> AuthorityScorer[CreatorAuthorityScorer: Trusted Creators & Domains]
-        AuthorityScorer --> Synthesize[Synthesize Ground Truth Research Dossier]
+        YTSource --> SubtitleParser[VTT Subtitle Parser: Spoken Transcript & Hook Extraction]
+        SubtitleParser & WebSource --> AuthorityScorer[Creator Authority & Retention Scorer]
+        AuthorityScorer --> Synthesize[Synthesize Research Dossier with Verbatim Spoken Scripts]
     end
 
-    subgraph S2["2. Script Generation Engine"]
+    subgraph S2["2. Script & Visual Storyboard Generation"]
         Synthesize --> LLMDispatcher[LLM Dispatcher]
         LLMDispatcher --> OpenRouter[OpenRouter: Llama-3.3-70B-Instruct]
         LLMDispatcher -. Failover .-> Omniroute[Omniroute 1.6B Token Proxy]
         LLMDispatcher -. Local Free .-> Ollama[Local Ollama / Llama 3.2]
-        OpenRouter --> Script[Authentic Technical Script: Hook, Sections, Bullets, Timings]
+        OpenRouter --> Script[Multi-Scene Visual Storyboard: Spoken Script, Cues, Telemetry Metrics]
     end
 
-    subgraph S3["3. Autonomous Voice Routing & Synthesis"]
+    subgraph S3["3. Studio Audio & Autonomous Voice Routing"]
         Script --> VoiceRouter[Autonomous Voice Router]
         VoiceRouter -- "Default (Any Length)" --> KittenTTS[KittenTTS Engine: expr-voice-2-m]
         VoiceRouter -- "Explicit Cloned Voice" --> OmniVoice[OmniVoice Profile: Minhaz / Onyx / Alloy]
         VoiceRouter -- "Multilingual Non-EN" --> MultiVoice[OmniVoice 600+ Languages]
-        KittenTTS --> ChunkSplit[3-4 Sentence Chunk Splitter]
-        OmniVoice --> ChunkSplit
-        MultiVoice --> ChunkSplit
-        ChunkSplit --> AudioConcat[FFmpeg Audio Concatenation & Normalization]
+        KittenTTS & OmniVoice & MultiVoice --> AudioQuality[Audio Quality Engine: 32-bit Float Original / 24-bit Editing / 16-bit Standard]
+        AudioQuality --> ChunkSplit[3-4 Sentence Chunk Splitter & Refinement Passes]
+        ChunkSplit --> AudioConcat[FFmpeg Audio Concatenation & EBU R128 loudnorm Volume Leveling]
     end
 
     subgraph S4["4. Subtitle Generation"]
@@ -111,65 +111,98 @@ flowchart TD
         SubGen --> VTT[WebVTT Subtitles]
     end
 
-    subgraph S5["5. Autonomous Remotion Visual Synthesizer"]
-        Script & AudioConcat --> RemotionSkills[Remotion Dev Skills Rules Engine]
-        RemotionSkills --> LLMSynthesizer[OpenRouter Llama 3.3 70B Synthesizer]
-        LLMSynthesizer --> DynamicTSX[Generated DynamicTopicScene.tsx]
-        DynamicTSX --> HybridLibrary[Hybrid Primitives: TitleCard, Charts, Timelines, Nodes, Math, Custom SVG]
-        DynamicTSX --> Validator[AST/Regex & TypeScript Validator + Smoke-Test Render]
-        Validator -- "Violations Found" --> RepairLoop[Auto-Repair Prompt Loop max 3x]
-        RepairLoop --> DynamicTSX
-        Validator -- "Fallback Needed" --> PresetFallback[Deterministic Primitives Fallback]
-        Validator -- "Verified Valid" --> RemotionRenderer[Remotion Renderer Node.js + Chrome Headless]
-        PresetFallback --> RemotionRenderer
-        RemotionRenderer --> RemotionMP4[1080p React Motion Graphics Video]
+    subgraph S5["5. Direct Motion Graphics & Telemetry Viewports"]
+        Script & AudioConcat --> RemotionRenderer[Remotion Node.js Engine]
+        RemotionRenderer --> DynamicExplainer[DynamicExplainer.tsx Canvas]
+        DynamicExplainer --> Mechanisms[Visual Mechanisms: Turbofan Jet, Engine Cutaway, Constant-Mesh Gearbox, AI Memory Matrices, SVG Maps]
+        DynamicExplainer --> TelemetryHUD[Floating HUD Glassmorphism Telemetry Badges]
+        TelemetryHUD & Mechanisms --> RemotionMP4[Direct Motion Graphics 60fps MP4]
     end
 
-    subgraph S6["6. Multi-Format FFmpeg Composition"]
+    subgraph S6["6. Multi-Platform & Ratio Composition"]
         RemotionMP4 & AudioConcat & ASS --> VideoComposer[FFmpeg Video Composer]
-        VideoComposer --> YT[YouTube Landscape 1920x1080 MP4]
-        VideoComposer --> Shorts[YouTube Shorts Vertical 1080x1920 MP4]
-        VideoComposer --> TikTok[TikTok Vertical 1080x1920 MP4]
+        VideoComposer --> YT[YouTube Landscape 16:9 1920x1080]
+        VideoComposer --> Shorts[Shorts / TikTok Vertical 9:16 1080x1920]
+        VideoComposer --> Square[Instagram Square 1:1 1080x1080]
+        VideoComposer --> Portrait[Social Portrait 4:5 1080x1350]
     end
 
-    YT & Shorts & TikTok --> Output([Delivered Assets in /output/RUN_ID])
+    YT & Shorts & Square & Portrait --> Output([Delivered Assets in /output/RUN_ID])
 ```
 
 ---
 
 ## ✨ Key Features
 
-### 1. Topic Intelligence & Self-Healing Research
-* **Automatic Typo & Error Identification**: Catches transposed, misspelled, or fabricated AI models and engineering terms (e.g., inputting `Spark-X2.6-71.7B` or `Spark-X2.6-7.1.7B` is automatically identified as the real `Spark-X2.6-1.7B` 1.71B-parameter dense model).
+### 1. Topic Intelligence & Competitor Transcript Analysis
+* **YouTube Spoken Transcript Extraction**: Uses `yt-dlp` subtitle tracks to extract real spoken English transcripts and subtitles from high-ranking competitor videos without downloading any heavy media files.
+* **Competitor Hook & Retention Deconstruction**: Parses VTT cues into clean continuous prose and extracts verbatim opening hooks from spoken audio, feeding them to the scriptwriter to engineer a superior hook in the first 3 seconds.
+* **Automatic Typo & Error Identification**: Catches transposed, misspelled, or fabricated AI models and engineering terms (e.g., inputting `Spark-X2.6-71.7B` is automatically identified as the real `Spark-X2.6-1.7B` 1.71B-parameter dense model).
 * **Live Search-Augmented Grounding**: Probes DuckDuckGo and Wikipedia before making decisions to anchor LLM responses in real-world facts.
-* **Cascading Multi-Tier Research**: Queries `yt-dlp` for YouTube community reception; if YouTube results are sparse (<2 videos), cascades seamlessly to live internet documentation and technical specs.
+* **Cascading Multi-Tier Research**: If YouTube results are sparse (<2 videos), cascades seamlessly to live internet documentation and technical specs.
 
-### 2. Anti-Misconception Script Synthesis
+### 2. Anti-Misconception Script Synthesis & Multi-Scene Storyboards
+* **Multi-Scene Visual Storyboarding**: Mandates 3 to 5 progressive visual scenes with synchronized `visual_cue`, `graphic_type` (e.g., `turbofan`, `mechanism`, `compute`, `map`), and live telemetry data (`key_metric`). Banish generic single-section bullet lists forever.
 * **Zero-Hallucination Prompt Engineering**: Designed specifically to explain real engineering and computer science principles without hand-wavy buzzwords.
-* **Exact Mathematical Grounding**: In AI topics, enforces exact formulas:
-  $$\text{VRAM Required} = \text{Parameters} \times \text{Bytes per Parameter} + \text{KV Cache}$$
-  Distinguishes between compute-bound prefill ($O(N^2)$ FLOPs) and memory-bandwidth-bound decode ($O(N)$ bytes transferred per token).
+* **Exact Mathematical & Physical Grounding**:
+  * **AI Computing**: Enforces VRAM equations, memory bandwidth bounds, and quantization trade-offs (FP16 vs INT8 vs INT4).
+  * **Jet Propulsion**: Explains cold air bypass ratios ($85-90\%$ thrust from the front fan), $40:1$ core compression ratios, turbine expansion, and convergent supersonic exhaust nozzles ($F = \dot{m} \cdot \Delta v$).
 * **OpenRouter + Omniroute Failover**: Uses **OpenRouter** (`meta-llama/llama-3.3-70b-instruct`) for rapid, high-accuracy script generation, with automatic failover to the local **Omniroute** proxy (1.6 Billion tokens) or local **Ollama**.
 
-### 3. Autonomous Voice Routing & KittenTTS
-* **KittenTTS as Universal Default**: Synthesizes clean, high-speed, engaging explainer narration across scripts of any length with zero cold-start delay.
-* **Personalized Cloned Voice Support**: Seamlessly switch to custom cloned voices (e.g. `--voice-name Minhaz` or `--voice-id e50a2165`) via local OmniVoice profiles.
-* **Chunked Sentence Pipeline**: Long narrations are split into 3–4 sentence chunks, synthesized in sequence, and seamlessly joined with pause normalization to guarantee zero truncation and perfect audio-visual sync.
+### 3. Studio Voice Routing & 3 Audio Quality Categories
+* **Universal KittenTTS & OmniVoice**: Synthesizes clean, high-speed, engaging explainer narration across scripts of any length with zero cold-start delay, or switches to custom cloned voice profiles (e.g. `--voice-name Minhaz`).
+* **3 Studio Audio Quality Categories**:
+  * **`original` (Default)**: **32-bit float** (`pcm_f32le` / 320 kbps MP3) preserving pristine dynamic range without digital clipping.
+  * **`editing` / `for editing`**: **24-bit PCM** (`pcm_s24le` / 320 kbps MP3) tailored for studio DAW mixing, DaVinci Resolve, and Premiere Pro.
+  * **`standard`**: **16-bit PCM** (`pcm_s16le` / 192 kbps MP3) for compact, lightweight sharing.
+* **Voice Refinement Passes**: Configurable iteration passes (default: `19`) balancing generation speed and acoustic fidelity.
+* **Even Out Volume (EBU R128 `loudnorm`)**: Seamlessly normalizes integrated loudness ($I = -16$ LUFS, $TP = -1.5$ dBFS) across chunked sentence segments to prevent jarring audio jumps.
 
-### 4. React/Remotion Visual Mechanisms & Simulation
-* **Not Just Slides**: Replaces boring bullet cards with live React/Remotion mechanical simulations.
-* **Kinematic Involute Gears**: Custom SVG gear generators with calculated teeth meshes ($\omega_1 \cdot r_1 = \omega_2 \cdot r_2$).
-* **Slider-Crank Slider Simulation**: Trigonometrically accurate piston stroke in single-cylinder engine blocks.
-* **Internal Camera Transitions**: Seamless zoom-in penetrating engine crankcases to reveal the constant-mesh transmission cavity.
-* **Dual-Column HUD**: 1080p split layout with section telemetry, step badges, and real-time mechanical simulation canvas.
+### 4. React/Remotion Visual Mechanisms & Telemetry HUD
+* **Direct Motion Graphics Engine**: High-performance React motion graphics built directly on `DynamicExplainer.tsx` and `VisualMechanismViewport.tsx`.
+* **Glassmorphism Telemetry HUD**: Renders real-time floating cyan HUD badges displaying active parameters (e.g., `Bypass Ratio: 10:1`, `Core Temp: 1,700 °C`, `Compression: 40:1`).
+* **Turbofan Jet Mechanism (`TurbofanJetMechanism.tsx`)**: High-bypass front fan with rotating blades, multi-stage counter-rotating axial compressor spools, pulsing annular combustor flames, and supersonic exhaust nozzle with Mach shock diamonds.
+* **Motorcycle Constant Mesh Gearbox (`SequentialGearboxMechanism.tsx`)**: 6-speed constant mesh transmission with sliding dog clutch collars and neon torque flow lines.
+* **Engine Slider-Crank Cutaway (`EngineCrossSection.tsx`)**: Reciprocating piston with spark plug ignition and counterweighted crankshaft.
+* **Silicon Compute Visualizer**: Synaptic node networks, quantized weight matrix registers, and GPU HBM3 memory bus streaming.
+* **Vector Geographic Viewport (`MapViewport.tsx`)**: SVG world projection with animated bezier transit arcs and glowing radar ping coordinates.
 
-### 5. FFmpeg Multi-Format Video Composition
-* Generates synchronized **16:9 Landscape** (YouTube) and **9:16 Vertical** (Shorts, TikTok, Reels) in one run.
-* Burns in high-contrast styled subtitles (`.ass`) with karaoke highlights, subtle dark gradient cards, and smooth audio waveforms.
+### 5. Multi-Platform & Ratio Composition
+* **Multi-Aspect Ratio Support**: Generates pixel-perfect videos in **16:9 Landscape** ($1920\times 1080$), **9:16 Vertical** ($1080\times 1920$), **1:1 Square** ($1080\times 1080$), and **4:5 Portrait** ($1080\times 1350$).
+* **Advisory Duration Budgeting**: Pass `--duration <seconds>` to automatically calibrate narration word counts ($2.3-2.6$ words/sec) and section duration hints to fit your target video length.
+* **Burned-In Subtitles**: Word-by-word karaoke-highlighted subtitles (`.ass`) rendered with safe-zone margins for each target social platform.
 
 ---
 
 ## ⚙️ Visual Mechanical Engine in Action
+
+### High-Bypass Turbofan Jet Engine & Supersonic Nozzle
+For aerospace and propulsion topics, OmniStudio choreographs a 4-stage physics cutaway with live telemetry:
+
+```
+[ Stage 1: Cold Air Bypass Stream ]
+   Titanium front fan accelerates to 3,000 RPM.
+   85-90% of total thrust produced by unburned cold air flowing around outer duct.
+   HUD Telemetry: Bypass Ratio: 10:1 | Airflow: 1,200 kg/s.
+           │
+           ▼
+[ Stage 2: Multi-Stage Axial Compression ]
+   Low-pressure and high-pressure compressor spools spin in counter-phase.
+   Air squeezed from 1 atm to over 40 atm, heating to 600°C.
+   HUD Telemetry: Pressure Ratio: 40:1 | Core Compression Active.
+           │
+           ▼
+[ Stage 3: Annular Combustor & Turbine Expansion ]
+   Fuel nozzles inject atomized kerosene into compressed airflow.
+   Combustion reaches 1,700°C, expanding through single-crystal turbine blades.
+   HUD Telemetry: Core Temp: 1,700°C | Turbine RPM: 12,500.
+           │
+           ▼
+[ Stage 4: Supersonic Convergent Nozzle ]
+   Convergent exhaust nozzle accelerates hot core gases to supersonic velocity.
+   Mach shock diamond pattern forms in high-velocity exhaust plume.
+   HUD Telemetry: Net Thrust: 450 kN | Newton's 3rd Law F = m_dot * Δv.
+```
 
 ### Motorcycle Constant Mesh Gearbox
 When tasked with explaining a motorcycle transmission, OmniStudio generates a specialized 4-stage visual narrative:
@@ -270,108 +303,108 @@ TTS_PROVIDER=kitten
 
 ---
 
-## 🎨 AI Remotion Visual Synthesizer & Hybrid Primitives
+## 🎨 Direct Motion Graphics & Visual Choreography Pipeline
 
-### Why the Architecture Evolved Beyond Hardcoded Scenes
-In early prototypes, OmniStudio demonstrated specific mechanical proof-of-concept visual viewports (e.g., *Meshing Involute Gears* for motorcycle gearboxes, and *HBM3 GPU Silicon Bus Streams* for AI model weight explainers). 
-
-In production, **OmniStudio does not hardcode scenes**. Instead, it uses an **Autonomous AI Visual Synthesizer** (`remotion_synthesizer.py`) that generates customized React motion graphics for **any arbitrary topic** (from jet propulsion and quantum computers to photosynthesis and cardiovascular hemodynamics).
+OmniStudio renders visuals through a **direct, frame-synchronized React motion graphics engine** (`DynamicExplainer.tsx` + `VisualMechanismViewport.tsx`), eliminating generic presentation slide cards in favor of authentic mechanical simulations, vector graphics, and live telemetry:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                   AI Visual Synthesizer Architecture                   │
+│             Direct Motion Graphics & Telemetry Architecture            │
 ├────────────────────────────────┬───────────────────────────────────────┤
-│ 1. Remotion Dev Skills         │ Rules from remotion-dev/skills pinned │
-│    (Prompt Compiler)           │ at 1fc074b7. Enforces frame-driven    │
-│                                │ interpolate(), safe-area layouts, etc.│
+│ 1. Synchronized Storyboard     │ Llama 3.3 70B plans multi-stage scenes│
+│    (script_generator.py)       │ with explicit visual cues, animation  │
+│                                │ categories, and key metric telemetry. │
 ├────────────────────────────────┼───────────────────────────────────────┤
-│ 2. Hybrid Scene Primitives     │ Reusable, frame-tested building blocks:│
-│    (remotion/src/primitives/)  │ TitleCard, BulletReveal, BarChart,     │
-│                                │ LineChart, Timeline, DiagramNodes,    │
-│                                │ Counter, and CaptionOverlay.          │
+│ 2. DynamicExplainer Canvas     │ Universal React/Remotion canvas with   │
+│    (DynamicExplainer.tsx)      │ multi-layer animated particle field,   │
+│                                │ kinetic typography, and HUD overlays. │
 ├────────────────────────────────┼───────────────────────────────────────┤
-│ 3. AST & TSC Validator         │ Rejects CSS transitions, @keyframes,   │
-│    (validate_scene.py)         │ unallowed imports, and syntax errors. │
+│ 3. Domain Mechanism Viewports  │ Dedicated physics-driven simulators:  │
+│    (components/)               │ TurbofanJetMechanism, EngineCutaway,  │
+│                                │ SequentialGearbox, SiliconHBM3, Maps. │
 ├────────────────────────────────┼───────────────────────────────────────┤
-│ 4. Smoke-Test Render & Repair  │ Renders a test still frame via Remotion│
-│    (Auto-Repair Loop)          │ CLI. Auto-repairs errors up to 3x,     │
-│                                │ or falls back safely to primitives.   │
+│ 4. Floating Telemetry HUD      │ Glassmorphism cyan HUD telemetry      │
+│    (keyMetric badging)         │ badges displaying real-time metrics,  │
+│                                │ ratios, pressures, and formulas.      │
 └────────────────────────────────┴───────────────────────────────────────┘
 ```
 
-### Generative Visual Capabilities & Boundaries
-* **What it generates autonomously**:
-  - Structured infographic cards, dynamic counters, and multi-step timeline flows.
-  - Mathematical comparison graphs, bar charts, and coordinate node-diagrams.
-  - Domain-specific procedural SVG animations (e.g., turbine rotors, cutaway casings, fluid flow paths) driven purely by `interpolate(frame, ...)` and `spring()`.
-* **Current Boundaries**:
-  - Renders 2D motion graphics and isometric SVG animations; it does not generate full 3D polygon meshes or ray-traced CAD files.
-  - Adheres strictly to safe margins ($1920 \times 1080$ and $1080 \times 1920$) and uses no external CSS keyframe stylesheets.
-# OpenRouter API Key (Recommended for high-accuracy scripts)
-OPENROUTER_API_KEY=your_openrouter_api_key_here
-OPENROUTER_MODEL=meta-llama/llama-3.3-70b-instruct
-
-# VoiceStudio Backend (Local KittenTTS & OmniVoice)
-VOICESTUDIO_URL=http://localhost:3900
-DEFAULT_TTS_MODEL=kittentts
-DEFAULT_TTS_VOICE=expr-voice-2-m
-
-# Optional Cloned Voice Override
-CLONED_VOICE_NAME=Minhaz
-```
+### Visual Engine Mechanisms
+* **Turbofan Jet & Supersonic Exhaust (`TurbofanJetMechanism.tsx`)**: High-bypass front fan with rotating blades, multi-stage counter-rotating axial compressor spools, pulsing annular combustor flames, and supersonic exhaust nozzle with Mach shock diamonds.
+* **Motorcycle Constant Mesh Gearbox (`SequentialGearboxMechanism.tsx`)**: 6-speed constant mesh transmission with sliding dog clutch collars and neon torque flow lines.
+* **4-Stroke Engine Slider-Crank Cutaway (`EngineCrossSection.tsx`)**: Reciprocating piston with spark plug ignition and counterweighted crankshaft.
+* **Silicon Compute & Neural Matrix Visualizer**: Synaptic node networks, quantized weight matrix registers, and GPU HBM3 memory bus streaming.
+* **Geographic Vector Projections (`MapViewport.tsx`)**: Natural TopoJSON/SVG world projection with animated bezier transit arcs and glowing radar ping coordinates.
 
 ---
 
 ## 💻 Usage Guide
 
 ### Single-Command Execution
-Generate an end-to-end video (research, script, voiceover, Remotion motion graphics, multi-format composition) in one command:
+Generate an end-to-end video (competitor transcript research, script synthesis, studio voiceover, Remotion motion graphics, multi-format composition) in one command:
 
 ```bash
-python pipeline.py --topic "how bike gearbox works"
-```
+# Aerospace / Turbofan Explainer (Vertical Shorts format)
+python pipeline.py --topic "Jet Propulsion Basics" --ratio 9:16
 
-Or for AI technology:
-```bash
-python pipeline.py --topic "AI model weights"
+# Mechanical Engineering (YouTube 16:9 format with custom duration)
+python pipeline.py --topic "how bike gearbox works" --ratio 16:9 --duration 60
+
+# AI Technology with Cloned Voice and 32-bit Float Original Quality
+python pipeline.py --topic "AI model weights" --voice-name Minhaz --audio-quality original
 ```
 
 ### CLI Reference
 
 ```text
 usage: pipeline.py [-h] [--topic TOPIC] [--topics TOPICS]
-                   [--platform {youtube,shorts,tiktok,instagram}]
-                   [--formats FORMATS] [--from-script FROM_SCRIPT]
-                   [--voice-id VOICE_ID] [--voice-name VOICE_NAME]
+                   [--platform {youtube,shorts,tiktok,instagram_reels}]
+                   [--ratio {16:9,9:16,1:1,4:5}]
+                   [--duration DURATION]
+                   [--voice-model {kittentts,omnivoice}]
+                   [--voice-name VOICE_NAME] [--voice-id VOICE_ID]
+                   [--audio-quality {original,editing,standard}]
+                   [--voice-refinement VOICE_REFINEMENT]
+                   [--even-out-volume] [--no-even-out-volume]
                    [--language LANGUAGE] [--list-voices]
                    [--no-research] [--no-video] [--remotion]
                    [--no-remotion] [--output-dir OUTPUT_DIR]
 
 Options:
-  --topic TOPIC          Single topic to generate content for
-  --topics TOPICS        Comma-separated list of topics
-  --platform PLATFORM    Target format (default: youtube)
-  --formats FORMATS      Output video formats: youtube,shorts,tiktok (default: all)
-  --voice-name NAME      Voice name to use (e.g. Minhaz, alloy, expr-voice-2-m)
-  --voice-id ID          Voice ID to use
-  --language LANG        Audio language (e.g. en, es, bn, hi, auto)
-  --list-voices          List all available voices in VoiceStudio and exit
-  --no-research          Skip yt-dlp & web research step
-  --no-video             Only generate script and audio, skip video rendering
-  --remotion             Render React Remotion motion graphics (default: True)
-  --no-remotion          Disable Remotion motion graphics; use FFmpeg gradients
+  --topic TOPIC                    Single topic to generate content for
+  --topics TOPICS                  Comma-separated list of topics
+  --platform PLATFORM              Platform preset: youtube, shorts, tiktok, instagram_reels
+  --ratio RATIO                    Target aspect ratio: 16:9, 9:16, 1:1, 4:5
+  --duration SECONDS               Advisory video duration in seconds (calibrates narration pacing)
+  --voice-model MODEL              Voice engine: kittentts (fast explainer) or omnivoice (clones)
+  --voice-name, --voice NAME       Voice name (e.g. expr-voice-2-m, Minhaz, onyx, alloy)
+  --voice-id ID                    Explicit voice ID from VoiceStudio
+  --audio-quality QUALITY          Studio quality: original (32-bit float), editing (24-bit PCM), standard (16-bit PCM)
+  --voice-refinement PASSES        Refinement iterations (default: 19)
+  --even-out-volume                Enable EBU R128 loudness normalization across chunks (default: True)
+  --no-even-out-volume             Disable loudness normalization
+  --language LANG                  Narration language (e.g. en, es, fr, bn, hi, auto)
+  --list-voices                    List all available voices in VoiceStudio and exit
+  --no-research                    Skip yt-dlp competitor & web research step
+  --no-video                       Only generate script and audio, skip video rendering
+  --remotion                       Render React Remotion motion graphics (default: True)
+  --no-remotion                    Disable Remotion; compose static background video with FFmpeg
 ```
 
-### Selecting Cloned Voices
-By default, OmniStudio uses **KittenTTS** (`expr-voice-2-m`) for all audio lengths for lightning-fast, studio-quality explainer audio. 
+### Selecting Cloned Voices & Studio Audio Quality
+By default, OmniStudio uses **KittenTTS** (`expr-voice-2-m`) with **Original 32-bit float audio quality** and **19 refinement passes** for crystal-clear, studio-grade narration.
 
-To use your own cloned voice profile from VoiceStudio:
+To inspect available voices and configure audio parameters:
 ```bash
-# List all connected cloned voices
+# 1. List all available voices
 python pipeline.py --list-voices
 
-# Run with cloned voice
-python pipeline.py --topic "AI model weights" --voice-name Minhaz
+# 2. Run with your cloned voice and studio editing quality
+python pipeline.py --topic "Turbofan Engines" \
+  --voice-name Minhaz \
+  --audio-quality editing \
+  --voice-refinement 25 \
+  --ratio 9:16
 ```
 
 ---
@@ -400,14 +433,14 @@ OmniStudio/
 │   │   │   ├── index.ts               # Remotion entry point
 │   │   │   ├── Root.tsx               # Composition registry
 │   │   │   ├── DynamicExplainer.tsx   # Universal split-screen HUD explainer
-│   │   │   ├── BikeGearboxComposition.tsx # 6-Speed Motorcycle Transmission
-│   │   │   ├── ModelWeightsComposition.tsx # AI Model Weights & Bandwidth
 │   │   │   ├── components/
-│   │   │   │   ├── GearWheel.tsx                  # Involute gear generator
+│   │   │   │   ├── TurbofanJetMechanism.tsx       # High-bypass turbofan & supersonic nozzle
 │   │   │   │   ├── EngineCrossSection.tsx         # 4-stroke engine cutaway
 │   │   │   │   ├── SequentialGearboxMechanism.tsx # 6-speed gear simulator
+│   │   │   │   ├── GearWheel.tsx                  # Involute gear generator
 │   │   │   │   └── VisualMechanismViewport.tsx    # Dynamic topic visualizer
 │   │   │   └── scenes/
+│   │   │       ├── primitives/        # DynamicBackdrop, CinematicCamera, KineticText, MapViewport
 │   │   │       ├── gearbox/           # Dedicated mechanical scenes
 │   │   │       └── *.tsx              # Hardware & compute scenes
 │   └── output/                        # Delivered videos, scripts, audio & subtitles
@@ -426,6 +459,9 @@ All settings can be customized in `ContentAutomation/config.py` or overridden vi
 | `VOICESTUDIO_URL` | `http://localhost:3900` | Local VoiceStudio backend endpoint |
 | `DEFAULT_TTS_MODEL` | `kittentts` | Default TTS engine (`kittentts` or `omnivoice`) |
 | `DEFAULT_TTS_VOICE` | `expr-voice-2-m` | Default voice preset |
+| `DEFAULT_AUDIO_QUALITY` | `original` | Audio bit depth: `original` (32-bit float), `editing` (24-bit PCM), `standard` (16-bit PCM) |
+| `DEFAULT_VOICE_REFINEMENT` | `19` | TTS refinement passes (1-50; higher = finer acoustic detail) |
+| `DEFAULT_EVEN_OUT_VOLUME` | `True` | Balance and level audio loudness with FFmpeg EBU R128 `loudnorm` |
 | `LLM_BACKEND` | `openrouter` | Active LLM (`openrouter`, `omniroute`, `ollama`) |
 | `VIDEO_WIDTH` | `1920` | Output landscape video width |
 | `VIDEO_HEIGHT` | `1080` | Output landscape video height |
@@ -438,10 +474,14 @@ All settings can be customized in `ContentAutomation/config.py` or overridden vi
 
 - [x] Autonomous Topic Intelligence & Typo Auto-Correction
 - [x] OpenRouter Llama 3.3 70B Technical Scriptwriting
-- [x] KittenTTS Default Voiceover Integration
-- [x] Chunked Voice Synthesis with Zero Pause Bleeding
-- [x] React / Remotion Involute Gear & Engine Kinematics Engine
-- [x] Multi-format (16:9 Landscape & 9:16 Vertical) Video Delivery
+- [x] YouTube Competitor Spoken Transcript Extraction & Subtitle Analysis
+- [x] Multi-Scene Visual Storyboard with Synchronized Remotion Cues
+- [x] Direct Motion Graphics Engine with Live Glassmorphism Telemetry HUD
+- [x] Turbofan Jet Engine, Engine Cutaway, Constant-Mesh Gearbox & Silicon Compute Viewports
+- [x] KittenTTS & OmniVoice Autonomous Routing
+- [x] Studio Audio Quality Tiers (32-bit Float Original, 24-bit Editing, 16-bit Standard)
+- [x] EBU R128 `loudnorm` Volume Leveling & Refinement Passes
+- [x] Multi-Aspect Ratio Control (16:9, 9:16, 1:1, 4:5) & Advisory Duration Budgeting
 - [ ] 3D WebGL / Three.js Visual Viewports in Remotion
 - [ ] Direct Social Media Publishing API (YouTube Data API v3 & TikTok API)
 - [ ] Autonomous Thumbnail Generator with Visual Mechanism Highlights
